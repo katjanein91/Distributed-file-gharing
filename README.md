@@ -1,2 +1,2 @@
-# Distributed-file-gharing
+# Distributed-file-sharing
 Users who are working in the same field of interest usually need a platform where they can exchange their files without problems. Our goal is to build a distributed system to allow multiple users to exchange data at the same time. The users should always be able to access the files without data loss or system termination. To make this possible, we build an environment with a main server supported by two replica servers. The replica servers will always be on the same state of the main server through multicast communication. In addition, the replica servers will take over in case of a failure of the main server and prevent a breakdown
