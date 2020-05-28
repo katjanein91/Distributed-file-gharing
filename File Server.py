@@ -8,6 +8,7 @@ Tolga Camlice
 import socket
 import tqdm
 import os
+import sys
 from Checksum import Checksum
 
 def send_file():
@@ -23,23 +24,38 @@ def send_file():
             if not bytes_read:
                 # file transmitting is done
                 break
-            # we use sendall to assure transimission in 
-            # busy networks
-            connection.sendall(bytes_read)
-            # update the progress bar
-            progress.update(len(bytes_read))
-        
-        connection.send(b"checksum=" + str.encode(checksum))
+            
+            try:
+                # we use sendall to assure transimission in 
+                # busy networks
+                connection.sendall(bytes_read)
+                # update the progress bar
+                progress.update(len(bytes_read))
+                
+            except socket.error:
+                print("Error sending file")
+                sys.exit(1)
+        try:
+            connection.send(b"checksum=" + str.encode(checksum))
+            
+        except socket.error:
+            print("Error sending checksum")
+            sys.exit(1)
 
 
 def read_from_socket(connection, client_address):
-    data = connection.recv(buffer_size)
-    msg = data.decode()
-    print('Received message from client: ', client_address)
-    print('Message: ', msg)
-        
-    if data and msg=='file':
-        send_file()
+    try:
+        data = connection.recv(buffer_size)
+        msg = data.decode()
+        print('Received message from client: ', client_address)
+        print('Message: ', msg)
+            
+        if data and msg=='file':
+            send_file()
+            
+    except socket.error:
+        print("Error receiving data")
+        sys.exit(1)
 
 if __name__ == "__main__":
     
@@ -53,11 +69,17 @@ if __name__ == "__main__":
     buffer_size = 1024
     #Define a timeout for connections
     timeout = 5000 
-    #Create a TCP socket
-    listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #listener_socket.settimeout(timeout)
-    listener_socket.bind((host, port))
-    listener_socket.listen()
+    try: 
+        #Create a TCP socket
+        listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #listener_socket.settimeout(timeout)
+        listener_socket.bind((host, port))
+        listener_socket.listen()
+    
+    except socket.error:
+        print("Error creating socket")
+        sys.exit(1)
+
     print('Server up and running at {}:{}'.format(host, port))
 
     try:
@@ -65,6 +87,10 @@ if __name__ == "__main__":
             print('\nWaiting to receive message...\n')
             connection, client_address = listener_socket.accept()
             read_from_socket(connection, client_address)
+            
+    except socket.error:
+        print("Connect from client failed: %s\n terminating program")
+        sys.exit(1)
 
     except KeyboardInterrupt:
         print("caught keyboard interrupt, exiting")
