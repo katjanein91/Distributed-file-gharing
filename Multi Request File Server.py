@@ -26,9 +26,10 @@ class Server(multiprocessing.Process):
         self.received_data = received_data
         self.msg = self.received_data.decode()
         self.client_address = client_address
+        self.server_id = 1
 
     def run(self):
-        print('This is server 1 process ' + str(os.getpid()))
+        print('This is server ' + str(self.server_id) + ' with process id ' + str(os.getpid()))
         if self.received_data and self.msg=='file':
             send_file(self.connection, self.client_address)
 
@@ -80,12 +81,9 @@ def read_from_socket(connection, client_address):
 
 if __name__ == "__main__":
     host, port = "127.0.0.1", 3000
-    #Define a timeout for connections
-    timeout = 5000 
     try: 
         #Create a TCP socket
         listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #listener_socket.settimeout(timeout)
         listener_socket.bind((host, port))
         listener_socket.listen()
     
