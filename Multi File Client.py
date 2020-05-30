@@ -13,7 +13,7 @@ import multiprocessing
 BUFFER_SIZE = 1024
 
 def send_message(server_address, server_port):
-    print('This is client process' + str(os.getpid()))
+    print('This is client 1 process ' + str(os.getpid()))
     try:
         #Create a TCP socket
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
