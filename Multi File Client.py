@@ -9,12 +9,15 @@ import socket
 import os
 import multiprocessing
 
-def send_message(server_address):
-    print('This is client ' + str(os.getpid()))
+#Receive buffer size
+BUFFER_SIZE = 1024
+
+def send_message(server_address, server_port):
+    print('This is client process' + str(os.getpid()))
     try:
         #Create a TCP socket
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect(server_address)
+        client_socket.connect((server_address, server_port))
         message = 'file'
         #Send data
         client_socket.sendall(message.encode())
@@ -23,7 +26,7 @@ def send_message(server_address):
         while True:
             # Receive response
             print('Waiting for response...')
-            data = client_socket.recv(buffer_size)
+            data = client_socket.recv(BUFFER_SIZE)
             if not data:
                 break
             print('Received message from server: ', data.decode())
@@ -33,12 +36,11 @@ def send_message(server_address):
         print('Socket closed')
         
 if __name__ == "__main__":
-    server_address = ('127.0.0.1', 3000)
-    #Receive buffer size
-    buffer_size = 1024
+    server_address = '127.0.0.1' 
+    server_port = 3000
 
     for i in range(3):
-        p = multiprocessing.Process(target=send_message, args=(server_address))
+        p = multiprocessing.Process(target=send_message, args=(server_address, server_port))
         p.start()
         p.join
 

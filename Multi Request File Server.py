@@ -12,6 +12,13 @@ import os
 import sys
 from Checksum import Checksum
 
+FILENAME = r"C:\Users\Tobi\Desktop\test.txt"
+CS = Checksum(FILENAME)
+# get the file size
+FILESIZE = os.path.getsize(FILENAME)
+#Receive buffer size
+BUFFER_SIZE = 1024
+
 class Server(multiprocessing.Process):
     def __init__(self, connection, received_data, client_address):
         super(Server, self).__init__()
@@ -23,18 +30,18 @@ class Server(multiprocessing.Process):
     def run(self):
         print('This is server 1 process ' + str(os.getpid()))
         if self.received_data and self.msg=='file':
-            send_file()
+            send_file(self.connection, self.client_address)
 
-def send_file():
-    checksum = cs.generate_digest()
+def send_file(connection, client_address):
+    checksum = CS.generate_digest()
     
-    print("sending file", f"{filename}".encode(), "with filesize", filesize, "kb", "to client", client_address)
+    print("sending file", f"{FILENAME}".encode(), "with filesize", FILESIZE, "kb", "to client", client_address)
     print("\n")
-    progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
-    with open(filename, "rb") as f:
+    progress = tqdm.tqdm(range(FILESIZE), f"Sending {FILENAME}", unit="B", unit_scale=True, unit_divisor=1024)
+    with open(FILENAME, "rb") as f:
         for _ in progress:
             # read the bytes from the file
-            bytes_read = f.read(buffer_size)
+            bytes_read = f.read(BUFFER_SIZE)
             if not bytes_read:
                 # file transmitting is done
                 break
@@ -59,7 +66,7 @@ def send_file():
 
 def read_from_socket(connection, client_address):
     try:
-        data = connection.recv(buffer_size)
+        data = connection.recv(BUFFER_SIZE)
         msg = data.decode()
         print('Received message from client: ', client_address)
         print('Message: ', msg)
@@ -72,15 +79,7 @@ def read_from_socket(connection, client_address):
         sys.exit(1)
 
 if __name__ == "__main__":
-    
-    filename = r"C:\Users\Tobi\Desktop\test.txt"
-    cs = Checksum(filename)
-    # get the file size
-    filesize = os.path.getsize(filename)
-    
     host, port = "127.0.0.1", 3000
-    #Receive buffer size
-    buffer_size = 1024
     #Define a timeout for connections
     timeout = 5000 
     try: 
