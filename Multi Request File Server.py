@@ -37,7 +37,7 @@ class Server(multiprocessing.Process):
             send_file(self.connection, self.client_address)
 
 def host_check():
-    HOST_UP = True if os.system("ping -n 2 " + IP) is 0 else False
+    HOST_UP = True if os.system("ping -n 1 " + IP) is 0 else False
     print(IP, " is up = ", HOST_UP)
 
 def send_file(connection, client_address):

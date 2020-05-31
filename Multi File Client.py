@@ -94,7 +94,7 @@ if __name__ == "__main__":
         p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port))
         p.start()
         p.join
-    time.sleep(TIMEOUT)
+    time.sleep(3)
     print("finished")
     p.terminate()
     
