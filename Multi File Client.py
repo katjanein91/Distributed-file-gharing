@@ -10,12 +10,16 @@ import os
 import time
 import sys
 import multiprocessing
+from Checksum import Checksum
+from pathlib import Path
 
 NUMBER_CLIENTS = 3
 #Define a timeout for connections
 TIMEOUT = 5000
 #Receive buffer size
 BUFFER_SIZE = 1024
+FILENAME = Path("C:/DistributedSystem/test_received.txt")
+CS = Checksum(FILENAME)
 
 def send_message(client_id, server_address, server_port):
     client_id += 1
@@ -33,7 +37,11 @@ def send_message(client_id, server_address, server_port):
         client_socket.connect((server_address, server_port))
 
     except socket.error:
-        print("Error connecting to server socket")
+        print("Couldnt connect to the server: %s\n terminating program")
+        sys.exit(1)
+        
+    except socket.gaierror:
+        print ("Address-related error connecting to server")
         sys.exit(1)
 
     try:
@@ -41,18 +49,41 @@ def send_message(client_id, server_address, server_port):
         #Send data
         client_socket.sendall(message.encode())
         print('Sent to server: ', message)
-        
+    
+    except socket.error:
+        print("Error sending file request")
+        sys.exit(1)
+
+    try: 
         while True:
             # Receive response
             print('Waiting for response...')
-            data = client_socket.recv(BUFFER_SIZE)
-            if not data:
-                break
-            print('Received message from server: ', data.decode())
 
-    except socket.error:
-        print("Error sending data")
-        sys.exit(1)
+            try:
+                data = client_socket.recv(BUFFER_SIZE)
+                if not data:
+                    break
+                print('Received message from server: ', data.decode())                
+                if data.decode() == 'This is a test':
+                    f = open(FILENAME, "w")
+                    f.write(data.decode())
+                    f.close()
+                if "checksum" in data.decode():
+                    received_checksum = data.decode().split("=")[1]
+                    checksum = CS.generate_digest()
+                    if received_checksum == checksum:
+                        print("file transmitted without errors")
+                    else:
+                        print("file corrupted while transmitting!!")
+
+            except socket.error:
+                print("Error receiving data")
+                sys.exit(1)
+
+    except KeyboardInterrupt:
+        print("caught keyboard interrupt, exiting")
+        print("Closing socket")
+        client_socket.close()
 
     if client_id == 3:
         client_socket.close()

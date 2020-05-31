@@ -11,8 +11,9 @@ import tqdm
 import os
 import sys
 from Checksum import Checksum
+from pathlib import Path
 
-FILENAME = r"C:\Users\Tobi\Desktop\test.txt"
+FILENAME = Path("C:/DistributedSystem/test.txt")
 CS = Checksum(FILENAME)
 # get the file size
 FILESIZE = os.path.getsize(FILENAME)
