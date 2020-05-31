@@ -13,6 +13,7 @@ import sys
 from Checksum import Checksum
 from pathlib import Path
 
+IP = "127.0.0.1"
 FILENAME = Path("C:/DistributedSystem/test.txt")
 CS = Checksum(FILENAME)
 # get the file size
@@ -32,7 +33,12 @@ class Server(multiprocessing.Process):
     def run(self):
         print('This is server ' + str(self.server_id) + ' with process id ' + str(os.getpid()))
         if self.received_data and self.msg=='file':
+            host_check()
             send_file(self.connection, self.client_address)
+
+def host_check():
+    HOST_UP = True if os.system("ping -n 2 " + IP) is 0 else False
+    print(IP, " is up = ", HOST_UP)
 
 def send_file(connection, client_address):
     checksum = CS.generate_digest()
@@ -57,14 +63,12 @@ def send_file(connection, client_address):
                 
             except socket.error:
                 print("Error sending file")
-                sys.exit(1)
+
         try:
             connection.send(b"checksum=" + str.encode(checksum))
             
         except socket.error:
             print("Error sending checksum")
-            sys.exit(1)
-
 
 def read_from_socket(connection, client_address):
     try:
@@ -78,10 +82,9 @@ def read_from_socket(connection, client_address):
             
     except socket.error:
         print("Error receiving data")
-        sys.exit(1)
 
 if __name__ == "__main__":
-    host, port = "127.0.0.1", 3000
+    host, port = IP, 3000
     try: 
         #Create a TCP socket
         listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -90,7 +93,6 @@ if __name__ == "__main__":
     
     except socket.error:
         print("Error creating socket")
-        sys.exit(1)
 
     print('Server up and running at {}:{}'.format(host, port))
 
@@ -101,10 +103,10 @@ if __name__ == "__main__":
             read_from_socket(connection, client_address)
             
     except socket.error:
-        print("Connect from client failed: %s\n terminating program")
-        sys.exit(1)
+        print("Connect from client failed")
 
     except KeyboardInterrupt:
         print("caught keyboard interrupt, exiting")
         print("Closing socket")
         listener_socket.close()
+        sys.exit(1)

@@ -8,11 +8,11 @@ Tolga Camlice
 import socket
 import os
 import time
-import sys
 import multiprocessing
 from Checksum import Checksum
 from pathlib import Path
 
+SERVER_IP = "127.0.0.1"
 NUMBER_CLIENTS = 3
 #Define a timeout for connections
 TIMEOUT = 5000
@@ -31,18 +31,15 @@ def send_message(client_id, server_address, server_port):
 
     except socket.error:
         print("Error creating socket")
-        sys.exit(1)
 
     try:
         client_socket.connect((server_address, server_port))
 
     except socket.error:
         print("Couldnt connect to the server: %s\n terminating program")
-        sys.exit(1)
         
     except socket.gaierror:
         print ("Address-related error connecting to server")
-        sys.exit(1)
 
     try:
         message = 'file'
@@ -52,7 +49,6 @@ def send_message(client_id, server_address, server_port):
     
     except socket.error:
         print("Error sending file request")
-        sys.exit(1)
 
     try: 
         while True:
@@ -78,7 +74,6 @@ def send_message(client_id, server_address, server_port):
 
             except socket.error:
                 print("Error receiving data")
-                sys.exit(1)
 
     except KeyboardInterrupt:
         print("caught keyboard interrupt, exiting")
@@ -90,7 +85,7 @@ def send_message(client_id, server_address, server_port):
         print('Socket closed')
         
 if __name__ == "__main__":
-    server_address = '127.0.0.1' 
+    server_address = SERVER_IP
     server_port = 3000
     p = None
 
@@ -99,7 +94,7 @@ if __name__ == "__main__":
         p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port))
         p.start()
         p.join
-    time.sleep(2)
+    time.sleep(TIMEOUT)
     print("finished")
     p.terminate()
     
