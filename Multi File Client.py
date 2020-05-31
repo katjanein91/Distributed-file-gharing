@@ -71,7 +71,9 @@ def send_message(client_id, server_address, server_port):
                         print("file transmitted without errors")
                     else:
                         print("file corrupted while transmitting!!")
-
+                        
+            except socket.timeout:
+                print("Timeout for receiving data")
             except socket.error:
                 print("Error receiving data")
 
