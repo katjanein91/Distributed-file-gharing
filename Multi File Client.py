@@ -59,11 +59,9 @@ def send_message(client_id, server_address, server_port):
                 data = client_socket.recv(BUFFER_SIZE)
                 if not data:
                     break
-                print('Received message from server: ', data.decode())                
-                if data.decode() == 'This is a test':
-                    f = open(FILENAME, "w")
-                    f.write(data.decode())
-                    f.close()
+                print('Received message from server: ', data.decode())   
+
+                #Check received checksum             
                 if "checksum" in data.decode():
                     received_checksum = data.decode().split("=")[1]
                     checksum = CS.generate_digest()
@@ -71,6 +69,12 @@ def send_message(client_id, server_address, server_port):
                         print("file transmitted without errors")
                     else:
                         print("file corrupted while transmitting!!")
+
+                #Write txt content to file
+                else:
+                    f = open(FILENAME, "w")
+                    f.write(data.decode())
+                    f.close()
                         
             except socket.timeout:
                 print("Timeout for receiving data")
@@ -82,6 +86,7 @@ def send_message(client_id, server_address, server_port):
         print("Closing socket")
         client_socket.close()
 
+    #Operations are finished, Socket can be closed
     if client_id == 3:
         client_socket.close()
         print('Socket closed')
@@ -91,6 +96,7 @@ if __name__ == "__main__":
     server_port = 3000
     p = None
 
+    #Start 1 process of each client
     for i in range(NUMBER_CLIENTS):
         client_id = i 
         p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port))

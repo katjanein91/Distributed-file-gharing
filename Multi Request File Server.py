@@ -33,7 +33,9 @@ class Server(multiprocessing.Process):
     def run(self):
         print('This is server ' + str(self.server_id) + ' with process id ' + str(os.getpid()))
         if self.received_data and self.msg=='file':
+            #Check server is running before transmitting
             host_check()
+            #Transmit file over socket
             send_file(self.connection, self.client_address)
 
 def host_check():
