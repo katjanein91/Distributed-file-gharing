@@ -12,6 +12,7 @@ import time
 import os
 import sys
 from Checksum import Checksum
+from MulticastGroup import MulticastGroup
 from pathlib import Path
 import threading
 
@@ -23,6 +24,7 @@ TCP_PORT = 3000
 MULTICAST_GROUP=("224.0.0.0", 10000)
 FILENAME = Path("C:/DistributedSystem/test.txt")
 CS = Checksum(FILENAME)
+MG = MulticastGroup()
 # get the file size
 FILESIZE = os.path.getsize(FILENAME)
 #Receive buffer size
@@ -43,33 +45,6 @@ class Server(multiprocessing.Process):
             send_file(self.connection, self.client_address)
 
 #Thread 
-class Multicast_receive(object):
-        def __init__(self, *args):
-                """ Constructor
-                :type interval: int
-                :param interval: Check interval, in seconds
-                """
-                self.args = args
-                thread = threading.Thread(target=self.run, args=())
-                thread.daemon = True                            # Daemonize thread
-                thread.start()                                  # Start the execution
-
-        def run(self):
-            try:
-                # Look for responses from all recipients
-                while True:
-                    print('\nWaiting to receive message on multicast channel...\n')
-                    try:
-                        data, server = multicast_socket.recvfrom(1024)
-
-                    except socket.timeout:
-                        print('timed out, no more responses')
-                        break
-                    else:
-                        print('received "%s" on multicast channel from %s' % (data, server))
-            except KeyboardInterrupt:
-                print("caught keyboard interrupt, exiting")
-#Thread 
 class Multicast_send(object):
         def __init__(self, *args):
                 """ Constructor
@@ -88,7 +63,10 @@ class Multicast_send(object):
                     multicast_message = b'Server ' + bytes(SERVER_ID, 'utf-8') + b' with IP ' + bytes(IP, 'utf-8')
                     print("Send message to multicast group: ", multicast_message)
                     sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
-                    time.sleep(60)
+                    time.sleep(5)
+                    #Update the group view
+                    group_view = MG.update_group()
+                    print(group_view)
             except KeyboardInterrupt:
                 print("caught keyboard interrupt, exiting")
 
@@ -162,8 +140,8 @@ if __name__ == "__main__":
     print('Server up and running at {}:{}'.format(IP, TCP_PORT))
 
     multicast_socket = create_udp_socket()
-    Multicast_receive()
     Multicast_send()
+    
     try:
         while True:
             print('\nWaiting to receive message on tcp socket...\n')
