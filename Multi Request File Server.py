@@ -101,7 +101,7 @@ def create_udp_socket():
         #Create a UDP socket
         print('Create UDP socket')
         multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        multicast_socket.settimeout(2.0)
+        multicast_socket.settimeout(20.0)
         #Set the time-to-live for messages to 1 so they do not go past the
         #local network segment.
         ttl = struct.pack('b', 1)
@@ -113,26 +113,24 @@ def create_udp_socket():
 if __name__ == "__main__":
     #Create multicast socket 
     multicast_socket = create_udp_socket()
-    try:
-        # Look for responses from all recipients
-        while True:
-            print('\nWaiting to receive message...\n')
-            try:
-                data, server = multicast_socket.recvfrom(16)
 
-                #Send data to the multicast group
-                multicast_message = b'Hello world, I am server with IP' + bytes(IP)
-                print("Send message to multicast group: ", multicast_message)
-                sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
-            except socket.timeout:
-                print('timed out, no more responses')
-                break
-            else:
-                print('received "%s" from %s' % (data, server))
+    # Look for responses from all recipients
+    while True:
+        #Send data to the multicast group
+        multicast_message = b'Hello world, I am server with IP' + bytes(IP)
+        print("Send message to multicast group: ", multicast_message)
+        sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
+        print('\nWaiting to receive message...\n')
+        try:
+            data, server = multicast_socket.recvfrom(1024)
+
+        except socket.timeout:
+            print('timed out, no more responses')
+            break
+        else:
+            print('received "%s" from %s' % (data, server))
     
-    finally:
-        print('closing udp socket')
-        multicast_socket.close()
+    
 
     #Create transfer socket 
     listener_socket = create_tcp_socket()
