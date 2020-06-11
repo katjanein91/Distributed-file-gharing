@@ -147,11 +147,11 @@ def create_udp_socket():
     try: 
         #Create a UDP socket
         print('Create UDP socket')
-        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         multicast_socket.settimeout(20.0)
         #Set the time-to-live for messages to 1 so they do not go past the
         #local network segment.
-        ttl = struct.pack('b', 1)
+        ttl = struct.pack('b', 2)
         multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
         return multicast_socket
     except socket.error:

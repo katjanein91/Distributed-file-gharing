@@ -39,7 +39,7 @@ def create_udp_socket():
     try: 
         #Create a UDP socket
         print('Create UDP socket')
-        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         multicast_socket.bind(MULTICAST_SERVER_ADDR)
         #Tell the operating system to add the socket to the multicast group
         #on all interfaces.
