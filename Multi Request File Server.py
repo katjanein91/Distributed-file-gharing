@@ -7,13 +7,18 @@ Tolga Camlice
 
 import multiprocessing
 import socket
+import struct
 import tqdm
 import os
 import sys
 from Checksum import Checksum
 from pathlib import Path
 
+#Transfer socket
 IP=socket.gethostbyname(socket.gethostname())
+TCP_PORT = 3000
+#IP Multicast group with UDP socket port
+MULTICAST_GROUP=("224.0.0.0", 10000)
 FILENAME = Path("C:/DistributedSystem/test.txt")
 CS = Checksum(FILENAME)
 # get the file size
@@ -79,19 +84,60 @@ def read_from_socket(connection, client_address):
     except socket.error:
         print("Error receiving data")
 
-if __name__ == "__main__":
-    port = 3000
+def create_tcp_socket():
     try: 
         #Create a TCP socket
+        print('Create TCP socket')
         listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #Accept connections from any host
-        listener_socket.bind(("", port))
+        listener_socket.bind(("", TCP_PORT))
         listener_socket.listen()
-    
+        return listener_socket
     except socket.error:
-        print("Error creating socket")
+        print("Error creating tcp socket")
 
-    print('Server up and running at {}:{}'.format(IP, port))
+def create_udp_socket():
+    try: 
+        #Create a UDP socket
+        print('Create UDP socket')
+        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        multicast_socket.settimeout(0.2)
+        #Set the time-to-live for messages to 1 so they do not go past the
+        #local network segment.
+        ttl = struct.pack('b', 1)
+        multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+        return multicast_socket
+    except socket.error:
+        print("Error creating udp socket")
+
+if __name__ == "__main__":
+    #Create multicast socket 
+    multicast_socket = create_udp_socket()
+    try:
+        #Send data to the multicast group
+        multicast_message = b'Hello world'
+        print("Send message to multicast group: ", multicast_message)
+        sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
+    
+        # Look for responses from all recipients
+        while True:
+            print('\nWaiting to receive message...\n')
+            try:
+                data, server = multicast_socket.recvfrom(16)
+            except socket.timeout:
+                print('timed out, no more responses')
+                break
+            else:
+                print('received "%s" from %s' % (data, server))
+    
+    finally:
+        print('closing udp socket')
+        multicast_socket.close()
+
+    #Create transfer socket 
+    listener_socket = create_tcp_socket()
+    
+    print('Server up and running at {}:{}'.format(IP, TCP_PORT))
 
     try:
         while True:

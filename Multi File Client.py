@@ -6,13 +6,17 @@ Tolga Camlice
 """
 
 import socket
+import struct
 import os
 import time
 import multiprocessing
 from Checksum import Checksum
 from pathlib import Path
 
-SERVER_IP = "127.0.0.1"
+SERVER_IP = "192.168.178.99"
+#IP Multicast group
+MULTICAST_GROUP="224.0.0.0"
+MULTICAST_SERVER_ADDR = ('', 10000)
 NUMBER_CLIENTS = 3
 #Define a timeout for connections
 TIMEOUT = 5000
@@ -21,17 +25,41 @@ BUFFER_SIZE = 1024
 FILENAME = Path("C:/DistributedSystem/test_received.txt")
 CS = Checksum(FILENAME)
 
+def create_tcp_socket():
+    try: 
+        #Create a TCP socket
+        print('Create TCP socket')
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.settimeout(TIMEOUT)
+        return client_socket
+    except socket.error:
+        print("Error creating tcp socket")
+
+def create_udp_socket():
+    try: 
+        #Create a UDP socket
+        print('Create UDP socket')
+        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        multicast_socket.bind(MULTICAST_SERVER_ADDR)
+        #Tell the operating system to add the socket to the multicast group
+        #on all interfaces.
+        group = socket.inet_aton(MULTICAST_GROUP)
+        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+        multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        return multicast_socket
+    except socket.error:
+        print("Error creating udp socket")
+
 def send_message(client_id, server_address, server_port):
     client_id += 1
     print('This is client ' + str(client_id) + ' with process id ' + str(os.getpid()))
-    try:
-        #Create a TCP socket
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.settimeout(TIMEOUT)
-
-    except socket.error:
-        print("Error creating socket")
-
+  
+    client_socket = create_tcp_socket()
+    multicast_socket = create_udp_socket()
+    data, address = multicast_socket.recvfrom(1024)
+    print('received %s bytes from %s' % (len(data), address))
+    multicast_socket.sendto('ack', address)
+    
     try:
         client_socket.connect((server_address, server_port))
 
