@@ -9,7 +9,6 @@ import multiprocessing
 import socket
 import struct
 import time
-import tqdm
 import os
 import sys
 from Checksum import Checksum
@@ -101,24 +100,17 @@ def send_file(connection, client_address):
     
     print("sending file", f"{FILENAME}".encode(), "with filesize", FILESIZE, "kb", "to client", client_address)
     print("\n")
-    progress = tqdm.tqdm(range(FILESIZE), f"Sending {FILENAME}", unit="B", unit_scale=True, unit_divisor=1024)
     with open(FILENAME, "rb") as f:
-        for _ in progress:
-            # read the bytes from the file
-            bytes_read = f.read(BUFFER_SIZE)
-            if not bytes_read:
-                # file transmitting is done
-                break
-            
-            try:
-                # we use sendall to assure transimission in 
-                # busy networks
-                connection.sendall(bytes_read)
-                # update the progress bar
-                progress.update(len(bytes_read))
+        # read the bytes from the file
+        bytes_read = f.read(BUFFER_SIZE)
+        
+        try:
+            # we use sendall to assure transimission in 
+            # busy networks
+            connection.sendall(bytes_read)
                 
-            except socket.error:
-                print("Error sending file")
+        except socket.error:
+            print("Error sending file")
 
         try:
             connection.send(b"checksum=" + str.encode(checksum))
