@@ -117,7 +117,7 @@ if __name__ == "__main__":
     # Look for responses from all recipients
     while True:
         #Send data to the multicast group
-        multicast_message = b'Hello world, I am server with IP' + bytes(IP)
+        multicast_message = b'Hello world, I am server with IP' + bytes(IP, 'utf-8')
         print("Send message to multicast group: ", multicast_message)
         sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
         print('\nWaiting to receive message...\n')

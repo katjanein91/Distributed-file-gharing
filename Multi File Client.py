@@ -53,13 +53,8 @@ def create_udp_socket():
 def send_message(client_id, server_address, server_port):
     client_id += 1
     print('This is client ' + str(client_id) + ' with process id ' + str(os.getpid()))
-  
+
     client_socket = create_tcp_socket()
-    multicast_socket = create_udp_socket()
-    data, address = multicast_socket.recvfrom(1024)
-    print('received %s bytes from %s' % (len(data), address))
-    multicast_socket.sendto('ack', address)
-    
     try:
         client_socket.connect((server_address, server_port))
 
@@ -124,14 +119,23 @@ if __name__ == "__main__":
     server_port = 3000
     p = None
 
+    multicast_socket = create_udp_socket()
+
+    while True:
+        data, address = multicast_socket.recvfrom(1024)
+        print('received %s bytes from %s' % (len(data), address))
+        multicast_socket.sendto('ack', address)
+        if data:
+            break
+
     #Start 1 process of each client
     for i in range(NUMBER_CLIENTS):
         client_id = i 
         p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port))
         p.start()
         p.join
-    time.sleep(3)
+"""     time.sleep(3)
     print("finished")
-    p.terminate()
+    p.terminate() """
     
 
