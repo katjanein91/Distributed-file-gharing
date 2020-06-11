@@ -13,7 +13,7 @@ import sys
 from Checksum import Checksum
 from pathlib import Path
 
-IP = "127.0.0.1"
+IP=socket.gethostbyname(socket.gethostname())
 FILENAME = Path("C:/DistributedSystem/test.txt")
 CS = Checksum(FILENAME)
 # get the file size
@@ -33,14 +33,8 @@ class Server(multiprocessing.Process):
     def run(self):
         print('This is server ' + str(self.server_id) + ' with process id ' + str(os.getpid()))
         if self.received_data and self.msg=='file':
-            #Check server is running before transmitting
-            host_check()
             #Transmit file over socket
             send_file(self.connection, self.client_address)
-
-def host_check():
-    HOST_UP = True if os.system("ping -n 1 " + IP) is 0 else False
-    print(IP, " is up = ", HOST_UP)
 
 def send_file(connection, client_address):
     checksum = CS.generate_digest()
@@ -86,17 +80,18 @@ def read_from_socket(connection, client_address):
         print("Error receiving data")
 
 if __name__ == "__main__":
-    host, port = IP, 3000
+    port = 3000
     try: 
         #Create a TCP socket
         listener_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener_socket.bind((host, port))
+        #Accept connections from any host
+        listener_socket.bind(("", port))
         listener_socket.listen()
     
     except socket.error:
         print("Error creating socket")
 
-    print('Server up and running at {}:{}'.format(host, port))
+    print('Server up and running at {}:{}'.format(IP, port))
 
     try:
         while True:
