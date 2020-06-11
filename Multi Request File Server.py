@@ -15,6 +15,7 @@ from Checksum import Checksum
 from pathlib import Path
 import threading
 
+SERVER_ID = 1
 #Transfer socket
 IP=socket.gethostbyname(socket.gethostname())
 TCP_PORT = 3000
@@ -34,10 +35,9 @@ class Server(multiprocessing.Process):
         self.received_data = received_data
         self.msg = self.received_data.decode()
         self.client_address = client_address
-        self.server_id = 1
 
     def run(self):
-        print('This is server ' + str(self.server_id) + ' with process id ' + str(os.getpid()))
+        print('This is server ' + str(SERVER_ID) + ' with process id ' + str(os.getpid()))
         if self.received_data and self.msg=='file':
             #Transmit file over socket
             send_file(self.connection, self.client_address)
@@ -87,7 +87,7 @@ class Multicast_send(object):
             try:
                 while True:
                     #Send data to the multicast group
-                    multicast_message = b'Hello world, I am server with IP ' + bytes(IP, 'utf-8')
+                    multicast_message = b'Server ' + bytes(str(SERVER_ID), 'utf-8') + b' with IP ' + bytes(IP, 'utf-8')
                     print("Send message to multicast group: ", multicast_message)
                     sent = self.socket.sendto(multicast_message, MULTICAST_GROUP)
                     time.sleep(5)
