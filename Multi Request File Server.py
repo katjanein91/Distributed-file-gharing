@@ -8,11 +8,13 @@ Tolga Camlice
 import multiprocessing
 import socket
 import struct
+import time
 import tqdm
 import os
 import sys
 from Checksum import Checksum
 from pathlib import Path
+import threading
 
 #Transfer socket
 IP=socket.gethostbyname(socket.gethostname())
@@ -40,6 +42,52 @@ class Server(multiprocessing.Process):
         if self.received_data and self.msg=='file':
             #Transmit file over socket
             send_file(self.connection, self.client_address)
+
+#Thread 
+class Multicast_receive(object):
+        def __init__(self, *args):
+                """ Constructor
+                :type interval: int
+                :param interval: Check interval, in seconds
+                """
+                self.args = args
+                self.socket = self.args[0]
+                thread = threading.Thread(target=self.run, args=())
+                thread.daemon = True                            # Daemonize thread
+                thread.start()                                  # Start the execution
+
+        def run(self):
+            # Look for responses from all recipients
+            while True:
+                print('\nWaiting to receive message on multicast channel...\n')
+                try:
+                    data, server = self.socket.recvfrom(1024)
+
+                except socket.timeout:
+                    print('timed out, no more responses')
+                    break
+                else:
+                    print('received "%s" on multicast channel from %s' % (data, server))
+#Thread 
+class Multicast_send(object):
+        def __init__(self, *args):
+                """ Constructor
+                :type interval: int
+                :param interval: Check interval, in seconds
+                """
+                self.args = args
+                self.socket = self.args[0]
+                thread = threading.Thread(target=self.run, args=())
+                thread.daemon = True                            # Daemonize thread
+                thread.start()                                  # Start the execution
+
+        def run(self):
+            while True:
+                #Send data to the multicast group
+                multicast_message = b'Hello world, I am server with IP ' + bytes(IP, 'utf-8')
+                print("Send message to multicast group: ", multicast_message)
+                sent = self.socket.sendto(multicast_message, MULTICAST_GROUP)
+                time.sleep(5)
 
 def send_file(connection, client_address):
     checksum = CS.generate_digest()
@@ -111,35 +159,16 @@ def create_udp_socket():
         print("Error creating udp socket")
 
 if __name__ == "__main__":
-    #Create multicast socket 
-    multicast_socket = create_udp_socket()
-
-    # Look for responses from all recipients
-    while True:
-        #Send data to the multicast group
-        multicast_message = b'Hello world, I am server with IP' + bytes(IP, 'utf-8')
-        print("Send message to multicast group: ", multicast_message)
-        sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
-        print('\nWaiting to receive message...\n')
-        try:
-            data, server = multicast_socket.recvfrom(1024)
-
-        except socket.timeout:
-            print('timed out, no more responses')
-            break
-        else:
-            print('received "%s" from %s' % (data, server))
-    
-    
-
     #Create transfer socket 
     listener_socket = create_tcp_socket()
-    
+    #Create multicast socket 
+    multicast_socket = create_udp_socket()
     print('Server up and running at {}:{}'.format(IP, TCP_PORT))
-
+    Multicast_receive(multicast_socket)
+    Multicast_send(multicast_socket)
     try:
         while True:
-            print('\nWaiting to receive message...\n')
+            print('\nWaiting to receive message on tcp socket...\n')
             connection, client_address = listener_socket.accept()
             read_from_socket(connection, client_address)
             
