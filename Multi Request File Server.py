@@ -50,7 +50,6 @@ class Multicast_receive(object):
                 :param interval: Check interval, in seconds
                 """
                 self.args = args
-                self.socket = create_udp_socket()
                 thread = threading.Thread(target=self.run, args=())
                 thread.daemon = True                            # Daemonize thread
                 thread.start()                                  # Start the execution
@@ -61,7 +60,7 @@ class Multicast_receive(object):
                 while True:
                     print('\nWaiting to receive message on multicast channel...\n')
                     try:
-                        data, server = self.socket.recvfrom(1024)
+                        data, server = multicast_socket.recvfrom(1024)
 
                     except socket.timeout:
                         print('timed out, no more responses')
@@ -78,7 +77,6 @@ class Multicast_send(object):
                 :param interval: Check interval, in seconds
                 """
                 self.args = args
-                self.socket = create_udp_socket()
                 thread = threading.Thread(target=self.run, args=())
                 thread.daemon = True                            # Daemonize thread
                 thread.start()                                  # Start the execution
@@ -89,8 +87,8 @@ class Multicast_send(object):
                     #Send data to the multicast group
                     multicast_message = b'Server ' + bytes(SERVER_ID, 'utf-8') + b' with IP ' + bytes(IP, 'utf-8')
                     print("Send message to multicast group: ", multicast_message)
-                    sent = self.socket.sendto(multicast_message, MULTICAST_GROUP)
-                    time.sleep(5)
+                    sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
+                    time.sleep(60)
             except KeyboardInterrupt:
                 print("caught keyboard interrupt, exiting")
 
@@ -162,6 +160,8 @@ if __name__ == "__main__":
     listener_socket = create_tcp_socket()
 
     print('Server up and running at {}:{}'.format(IP, TCP_PORT))
+
+    multicast_socket = create_udp_socket()
     Multicast_receive()
     Multicast_send()
     try:
