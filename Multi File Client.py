@@ -14,7 +14,6 @@ import multiprocessing
 from Checksum import Checksum
 from pathlib import Path
 
-SERVER_IP = "192.168.178.98"
 #IP Multicast group
 MULTICAST_GROUP="224.0.0.0"
 MULTICAST_SERVER_ADDR = ('', 10000)
@@ -116,7 +115,7 @@ def send_message(client_id, server_address, server_port):
         print('Socket closed')
         
 if __name__ == "__main__":
-    server_address = SERVER_IP
+    server_address = ""
     server_port = 3000
     p = None
 
@@ -127,6 +126,7 @@ if __name__ == "__main__":
         data, address = multicast_socket.recvfrom(1024)
         print('received %s from %s' % (data, address))
         multicast_socket.sendto(b'ack', address)
+        server_address = address[0]
         if data:
             break
         
