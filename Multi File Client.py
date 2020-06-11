@@ -122,9 +122,10 @@ if __name__ == "__main__":
     multicast_socket = create_udp_socket()
 
     while True:
+        print('Waiting for message on multicast channel...')
         data, address = multicast_socket.recvfrom(1024)
         print('received %s bytes from %s' % (len(data), address))
-        multicast_socket.sendto('ack', address)
+        multicast_socket.sendto(b'ack', address)
         if data:
             break
 
