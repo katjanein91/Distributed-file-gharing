@@ -7,13 +7,14 @@ Tolga Camlice
 
 import socket
 import struct
+import sys
 import os
 import time
 import multiprocessing
 from Checksum import Checksum
 from pathlib import Path
 
-SERVER_IP = "192.168.178.99"
+SERVER_IP = "192.168.178.98"
 #IP Multicast group
 MULTICAST_GROUP="224.0.0.0"
 MULTICAST_SERVER_ADDR = ('', 10000)
@@ -124,17 +125,23 @@ if __name__ == "__main__":
     while True:
         print('Waiting for message on multicast channel...')
         data, address = multicast_socket.recvfrom(1024)
-        print('received %s bytes from %s' % (len(data), address))
+        print('received %s from %s' % (data, address))
         multicast_socket.sendto(b'ack', address)
         if data:
             break
+        
+    try:
+        #Start 1 process of each client
+        for i in range(NUMBER_CLIENTS):
+            client_id = i 
+            p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port))
+            p.start()
+            p.join
+    except KeyboardInterrupt:
+        print("caught keyboard interrupt, exiting")
+        p.terminate()
+        sys.exit(1)
 
-    #Start 1 process of each client
-    for i in range(NUMBER_CLIENTS):
-        client_id = i 
-        p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port))
-        p.start()
-        p.join
 """     time.sleep(3)
     print("finished")
     p.terminate() """

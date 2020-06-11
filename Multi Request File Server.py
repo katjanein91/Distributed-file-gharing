@@ -51,23 +51,26 @@ class Multicast_receive(object):
                 :param interval: Check interval, in seconds
                 """
                 self.args = args
-                self.socket = self.args[0]
+                self.socket = create_udp_socket()
                 thread = threading.Thread(target=self.run, args=())
                 thread.daemon = True                            # Daemonize thread
                 thread.start()                                  # Start the execution
 
         def run(self):
-            # Look for responses from all recipients
-            while True:
-                print('\nWaiting to receive message on multicast channel...\n')
-                try:
-                    data, server = self.socket.recvfrom(1024)
+            try:
+                # Look for responses from all recipients
+                while True:
+                    print('\nWaiting to receive message on multicast channel...\n')
+                    try:
+                        data, server = self.socket.recvfrom(1024)
 
-                except socket.timeout:
-                    print('timed out, no more responses')
-                    break
-                else:
-                    print('received "%s" on multicast channel from %s' % (data, server))
+                    except socket.timeout:
+                        print('timed out, no more responses')
+                        break
+                    else:
+                        print('received "%s" on multicast channel from %s' % (data, server))
+            except KeyboardInterrupt:
+                print("caught keyboard interrupt, exiting")
 #Thread 
 class Multicast_send(object):
         def __init__(self, *args):
@@ -76,18 +79,22 @@ class Multicast_send(object):
                 :param interval: Check interval, in seconds
                 """
                 self.args = args
-                self.socket = self.args[0]
+                self.socket = create_udp_socket()
                 thread = threading.Thread(target=self.run, args=())
                 thread.daemon = True                            # Daemonize thread
                 thread.start()                                  # Start the execution
 
         def run(self):
-            while True:
-                #Send data to the multicast group
-                multicast_message = b'Hello world, I am server with IP ' + bytes(IP, 'utf-8')
-                print("Send message to multicast group: ", multicast_message)
-                sent = self.socket.sendto(multicast_message, MULTICAST_GROUP)
-                time.sleep(5)
+            try:
+                while True:
+                    #Send data to the multicast group
+                    multicast_message = b'Hello world, I am server with IP ' + bytes(IP, 'utf-8')
+                    print("Send message to multicast group: ", multicast_message)
+                    sent = self.socket.sendto(multicast_message, MULTICAST_GROUP)
+                    time.sleep(5)
+            except KeyboardInterrupt:
+                print("caught keyboard interrupt, exiting")
+
 
 def send_file(connection, client_address):
     checksum = CS.generate_digest()
@@ -161,11 +168,10 @@ def create_udp_socket():
 if __name__ == "__main__":
     #Create transfer socket 
     listener_socket = create_tcp_socket()
-    #Create multicast socket 
-    multicast_socket = create_udp_socket()
+
     print('Server up and running at {}:{}'.format(IP, TCP_PORT))
-    Multicast_receive(multicast_socket)
-    Multicast_send(multicast_socket)
+    Multicast_receive()
+    Multicast_send()
     try:
         while True:
             print('\nWaiting to receive message on tcp socket...\n')
