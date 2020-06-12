@@ -63,7 +63,7 @@ class Multicast_send(object):
                     multicast_message = b'Server ' + bytes(SERVER_ID, 'utf-8') + b' with IP ' + bytes(IP, 'utf-8')
                     print("Send message to multicast group: ", multicast_message)
                     sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
-                    time.sleep(5)
+                    time.sleep(1)
                     #Update the group view
                     group_view = MG.update_group()
                     print(group_view)
