@@ -49,7 +49,7 @@ class Server(multiprocessing.Process):
             send_file(self.connection, self.client_address)
 
 #Thread 
-class Multicast_send(object):
+class Multicast(object):
         def __init__(self, *args):
                 """ Constructor
                 :type interval: int
@@ -144,7 +144,7 @@ if __name__ == "__main__":
     print('Server up and running at {}:{}'.format(IP, TCP_PORT))
 
     multicast_socket = create_udp_socket()
-    Multicast_send()
+    Multicast()
     
     try:
         while True:
