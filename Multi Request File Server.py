@@ -16,13 +16,17 @@ from MulticastGroup import MulticastGroup
 from pathlib import Path
 import threading
 
-SERVER_ID = "Tobi"
+#Pass Server ID string from command line argument
+SERVER_ID = "1"
+if((len(sys.argv) - 1) >= 1):
+    SERVER_ID = sys.argv[1]  
 #Transfer socket
 IP=socket.gethostbyname(socket.gethostname())
 TCP_PORT = 3000
 #IP Multicast group with UDP socket port
 MULTICAST_GROUP=("224.0.0.0", 10000)
-FILENAME = Path("C:/DistributedSystem/test.txt")
+#Use path of FritzBox NAS space 
+FILENAME = Path("Y:/Gastbereich/test.txt")
 CS = Checksum(FILENAME)
 MG = MulticastGroup()
 # get the file size
@@ -60,7 +64,7 @@ class Multicast_send(object):
             try:
                 while True:
                     #Send data to the multicast group
-                    multicast_message = b'Server ' + bytes(SERVER_ID, 'utf-8') + b' with IP ' + bytes(IP, 'utf-8')
+                    multicast_message = b'Server ' + bytes(SERVER_ID, 'utf-8')
                     print("Send message to multicast group: ", multicast_message)
                     sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
                     time.sleep(1)
@@ -127,7 +131,7 @@ def create_udp_socket():
         multicast_socket.settimeout(20.0)
         #Set the time-to-live for messages to 1 so they do not go past the
         #local network segment.
-        ttl = struct.pack('b', 2)
+        ttl = struct.pack('b', 1)
         multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
         return multicast_socket
     except socket.error:

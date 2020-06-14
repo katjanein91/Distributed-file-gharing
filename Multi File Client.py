@@ -22,7 +22,8 @@ NUMBER_CLIENTS = 3
 TIMEOUT = 5000
 #Receive buffer size
 BUFFER_SIZE = 1024
-FILENAME = Path("C:/DistributedSystem/test_received.txt")
+#Use path of FritzBox NAS space 
+FILENAME = Path("Y:/Gastbereich/test.txt")
 CS = Checksum(FILENAME)
 
 def create_tcp_socket():
