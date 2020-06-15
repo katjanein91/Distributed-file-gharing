@@ -12,7 +12,7 @@ import time
 import os
 import sys
 from Checksum import Checksum
-from MulticastGroup import MulticastGroup
+from Multicast import Multicast
 from pathlib import Path
 import threading
 
@@ -27,8 +27,8 @@ TCP_PORT = 3000
 MULTICAST_GROUP=("224.0.0.0", 10000)
 #Use path of FritzBox NAS space 
 FILENAME = Path("Y:/Gastbereich/test.txt")
-CS = Checksum(FILENAME)
-MG = MulticastGroup()
+Checksum = Checksum(FILENAME)
+Multicast = Multicast(SERVER_ID)
 # get the file size
 FILESIZE = os.path.getsize(FILENAME)
 #Receive buffer size
@@ -48,35 +48,10 @@ class Server(multiprocessing.Process):
             #Transmit file over socket
             send_file(self.connection, self.client_address)
 
-#Thread 
-class Multicast(object):
-        def __init__(self, *args):
-                """ Constructor
-                :type interval: int
-                :param interval: Check interval, in seconds
-                """
-                self.args = args
-                thread = threading.Thread(target=self.run, args=())
-                thread.daemon = True                            # Daemonize thread
-                thread.start()                                  # Start the execution
-
-        def run(self):
-            try:
-                while True:
-                    #Send data to the multicast group
-                    multicast_message = b'Server ' + bytes(SERVER_ID, 'utf-8')
-                    print("Send message to multicast group: ", multicast_message)
-                    sent = multicast_socket.sendto(multicast_message, MULTICAST_GROUP)
-                    time.sleep(1)
-                    #Update the group view
-                    group_view = MG.update_group()
-                    print(group_view)
-            except KeyboardInterrupt:
-                print("caught keyboard interrupt, exiting")
 
 
 def send_file(connection, client_address):
-    checksum = CS.generate_digest()
+    checksum = Checksum.generate_digest()
     
     print("sending file", f"{FILENAME}".encode(), "with filesize", FILESIZE, "kb", "to client", client_address)
     print("\n")
@@ -123,28 +98,13 @@ def create_tcp_socket():
     except socket.error:
         print("Error creating tcp socket")
 
-def create_udp_socket():
-    try: 
-        #Create a UDP socket
-        print('Create UDP socket')
-        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        multicast_socket.settimeout(20.0)
-        #Set the time-to-live for messages to 1 so they do not go past the
-        #local network segment.
-        ttl = struct.pack('b', 1)
-        multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-        return multicast_socket
-    except socket.error:
-        print("Error creating udp socket")
+
 
 if __name__ == "__main__":
     #Create transfer socket 
     listener_socket = create_tcp_socket()
 
     print('Server up and running at {}:{}'.format(IP, TCP_PORT))
-
-    multicast_socket = create_udp_socket()
-    Multicast()
     
     try:
         while True:

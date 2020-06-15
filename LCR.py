@@ -1,29 +1,16 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jun  2 11:54:19 2020
-
-@author: tolgacamlice
-"""
-
-
 from uuid import uuid4
-
 
 ELECTION = 0
 NEW_LEAD = 1
 
-
-class Node:
+class LCR:
     def __init__(self, node):
         self.next_node = node
         self.uuid = uuid4()
         self.is_participant = False
         self.is_leader = False
         self.leader = False
-        print (format(self.uuid))
         
-
     def start_election(self):
         print("{} is starting an election.".format(self.uuid))
         self.is_participant = True
@@ -58,16 +45,3 @@ class Node:
                 self.leader = uuid
                 self.forward((NEW_LEAD, uuid))
 
-
-def spawn(count=5):
-    nodes = [Node(None)]
-    for _ in range(count - 1):
-        node = Node(None)
-        nodes[-1].next_node = node
-        nodes.append(node)
-    nodes[-1].next_node = nodes[0]
-    return nodes
-
-
-if __name__ == '__main__':
-    spawn(5)[0].start_election()
