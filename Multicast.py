@@ -31,6 +31,7 @@ class Multicast(object):
             self.start_time = datetime.now()
             self.current_runtime = 0
             self.args = args
+            self.multicast_message = b'Server ' + bytes(self.args[0], 'utf-8')
             thread = threading.Thread(target=self.run, args=(self.args[0],self.args[1]))
             thread.daemon = True                            # Daemonize thread
             thread.start()                                  # Start the execution
@@ -106,10 +107,13 @@ class Multicast(object):
         multicast_socket = self.create_udp_socket()
         try:
             while True:
+                if (self.leader_ip == server_ip):
+                    self.multicast_message =  b'LEADER Server ' + bytes(self.args[0], 'utf-8')
+                else:
+                    self.multicast_message =  b'Server ' + bytes(self.args[0], 'utf-8')
                 #Send data to the multicast group
-                multicast_message = b'Server ' + bytes(server_id, 'utf-8')
-                print("Send message to multicast group: ", multicast_message)
-                multicast_socket.sendto(multicast_message, (MULTICAST_GROUP, 10000))
+                print("Send message to multicast group: ", self.multicast_message)
+                multicast_socket.sendto(self.multicast_message, (MULTICAST_GROUP, 10000))
                 time.sleep(5)
                 #Update the group view
                 group_view = self.update_group(server)

@@ -127,8 +127,8 @@ if __name__ == "__main__":
         data, address = multicast_socket.recvfrom(1024)
         print('received %s from %s' % (data, address))
         multicast_socket.sendto(b'ack', address)
-        server_address = address[0]
-        if data:
+        if "LEADER" in data:
+            server_address = address[0]
             break
         
     try:
