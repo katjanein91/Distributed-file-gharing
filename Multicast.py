@@ -40,7 +40,7 @@ class Multicast(object):
         try: 
             #Create a UDP socket
             print('Create UDP socket')
-            multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             multicast_socket.settimeout(5.0)
             #Set the time-to-live for messages to 1 so they do not go past the
             #local network segment.

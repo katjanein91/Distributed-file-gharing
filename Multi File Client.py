@@ -40,7 +40,7 @@ def create_udp_socket():
     try: 
         #Create a UDP socket
         print('Create UDP socket')
-        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         multicast_socket.bind(MULTICAST_SERVER_ADDR)
         #Tell the operating system to add the socket to the multicast group
         #on all interfaces.
@@ -122,14 +122,16 @@ if __name__ == "__main__":
 
     multicast_socket = create_udp_socket()
 
+    #Wait for Leader message on multicast channel
     while True:
-        print('Waiting for message on multicast channel...')
-        data, address = multicast_socket.recvfrom(1024)
-        print('received %s from %s' % (data, address))
-        multicast_socket.sendto(b'ack', address)
-        if "LEADER" in data:
-            server_address = address[0]
-            break
+        if multicast_socket != None:
+            print('Waiting for message on multicast channel...')
+            data, address = multicast_socket.recvfrom(1024)
+            print('received %s from %s' % (data, address))
+            multicast_socket.sendto(b'ack', address)
+            if "LEADER" in data:
+                server_address = address[0]
+                break
         
     try:
         #Start 1 process of each client
