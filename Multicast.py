@@ -73,8 +73,8 @@ class Multicast(object):
                 self.group.append(server_address)
 
             #Start leader election
-            #if (len(self.group) > 1) and self.leader_selected == False:
-            if (len(self.group) == 1) and self.leader_selected == False:
+            if (len(self.group) > 1) and self.leader_selected == False:
+            #if (len(self.group) == 1) and self.leader_selected == False:
                 #ring = Ring(self.group)
                 #sorted_ips = ring.form_ring()
                 count = len(self.group)
