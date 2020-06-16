@@ -6,9 +6,8 @@ class Ring:
 
     def form_ring(self):
         sorted_binary_ring = sorted([socket.inet_aton(member) for member in self.members])
-        print(sorted_binary_ring)
         sorted_ip_ring = [socket.inet_ntoa(node) for node in sorted_binary_ring]
-        print(sorted_ip_ring)
+        print("Sorted group: "+ sorted_ip_ring)
         return sorted_ip_ring
 
 

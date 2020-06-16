@@ -28,7 +28,7 @@ MULTICAST_GROUP=("224.0.0.0", 10000)
 #Use path of FritzBox NAS space 
 FILENAME = Path("Y:/Gastbereich/test.txt")
 Checksum = Checksum(FILENAME)
-Multicast = Multicast(SERVER_ID)
+Multicast = Multicast(SERVER_ID, IP)
 # get the file size
 FILESIZE = os.path.getsize(FILENAME)
 #Receive buffer size
@@ -104,8 +104,8 @@ if __name__ == "__main__":
     #Create transfer socket 
     listener_socket = create_tcp_socket()
 
-    print('Server up and running at {}:{}'.format(IP, TCP_PORT))
-    
+    print('Server {} up and running at {}:{}'.format(SERVER_ID, IP, TCP_PORT))
+
     try:
         while True:
             print('\nWaiting to receive message on tcp socket...\n')

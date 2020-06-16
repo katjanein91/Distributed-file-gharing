@@ -27,10 +27,11 @@ class Multicast(object):
             #Set function with timer to reset the group view every X seconds
             self.reset_group()
             self.leader_selected = False
+            self.leader_ip = None
             self.start_time = datetime.now()
             self.current_runtime = 0
             self.args = args
-            thread = threading.Thread(target=self.run, args=(self.args[0]))
+            thread = threading.Thread(target=self.run, args=(self.args[0],self.args[1]))
             thread.daemon = True                            # Daemonize thread
             thread.start()                                  # Start the execution
 
@@ -53,7 +54,7 @@ class Multicast(object):
         self.group = []
         threading.Timer(10.0, self.reset_group).start() 
 
-    def update_group(self):
+    def update_group(self, server):
         server_address = ""
         print('\nwaiting to receive message')
         try:
@@ -72,15 +73,27 @@ class Multicast(object):
                 self.group.append(server_address)
 
             #Start leader election
-            if (len(self.group) > 1) and self.leader_selected == False:
-                ring = Ring(self.group)
-                sorted_ips = ring.form_ring()
+            #if (len(self.group) > 1) and self.leader_selected == False:
+            if (len(self.group) == 1) and self.leader_selected == False:
+                #ring = Ring(self.group)
+                #sorted_ips = ring.form_ring()
+                count = len(self.group)
+                nodes = [LCR(None, self.group)]
+                for _ in range(count - 1):
+                    node = LCR(None, self.group)
+                    nodes[-1].next_node = node
+                    nodes.append(node)
+                nodes[-1].next_node = nodes[0]
 
-                lcr = LCR(sorted_ips[0])
-                lcr.start_election()
-                self.leader_selected = True
+                nodes[0].start_election()
+                if nodes[0].leader != False:
+                    self.leader_selected = True
+                    if nodes[0].leader == server[1]:
+                        self.leader_ip = server[1]
+                        print("Leader IP is: " + self.leader_ip)
 
             #All 3 nodes has to be up within 10 seconds 
+            #If a node goes down and a leader is selected, start a new election
             if (len(self.group) < 3) and (self.current_runtime.seconds > 10) and self.leader_selected == True:
                 print("Starting new leader election...")
                 self.leader_selected = False
@@ -88,7 +101,8 @@ class Multicast(object):
             pass
         return self.group
 
-    def run(self, server_id):
+    def run(self, server_id, server_ip):
+        server = [server_id, server_ip]
         multicast_socket = self.create_udp_socket()
         try:
             while True:
@@ -98,7 +112,7 @@ class Multicast(object):
                 multicast_socket.sendto(multicast_message, (MULTICAST_GROUP, 10000))
                 time.sleep(5)
                 #Update the group view
-                group_view = self.update_group()
+                group_view = self.update_group(server)
                 print(group_view)
         except KeyboardInterrupt:
             print("caught keyboard interrupt, exiting")
