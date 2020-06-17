@@ -148,8 +148,9 @@ if __name__ == "__main__":
         p.terminate()
         sys.exit(1)
 
-"""     time.sleep(3)
+    time.sleep(10)
     print("finished")
-    p.terminate() """
+    p.terminate()
+    sys.exit()
     
 

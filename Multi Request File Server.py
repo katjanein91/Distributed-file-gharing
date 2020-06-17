@@ -26,7 +26,7 @@ TCP_PORT = 3000
 #IP Multicast group with UDP socket port
 MULTICAST_GROUP=("224.0.0.0", 10000)
 #Use path of FritzBox NAS space 
-FILENAME = Path("Y:/Gastbereich/test.txt")
+FILENAME = Path("Y:/Gastbereich/file_to_transmit.txt")
 Checksum = Checksum(FILENAME)
 Multicast = Multicast(SERVER_ID, IP)
 # get the file size
@@ -34,6 +34,7 @@ FILESIZE = os.path.getsize(FILENAME)
 #Receive buffer size
 BUFFER_SIZE = 1024
 
+#Server Thread
 class Server(multiprocessing.Process):
     def __init__(self, connection, received_data, client_address):
         super(Server, self).__init__()
