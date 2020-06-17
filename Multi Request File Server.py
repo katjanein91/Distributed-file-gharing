@@ -48,8 +48,6 @@ class Server(multiprocessing.Process):
             #Transmit file over socket
             send_file(self.connection, self.client_address)
 
-
-
 def send_file(connection, client_address):
     checksum = Checksum.generate_digest()
     
@@ -97,8 +95,6 @@ def create_tcp_socket():
         return listener_socket
     except socket.error:
         print("Error creating tcp socket")
-
-
 
 if __name__ == "__main__":
     #Create transfer socket 

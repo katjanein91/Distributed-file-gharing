@@ -16,7 +16,7 @@ from pathlib import Path
 
 #IP Multicast group
 MULTICAST_GROUP="224.0.0.0"
-MULTICAST_SERVER_ADDR = ('', 10000)
+MULTICAST_SERVER_ADDR = ("", 10000)
 NUMBER_CLIENTS = 3
 #Define a timeout for connections
 TIMEOUT = 5000
@@ -36,18 +36,21 @@ def create_tcp_socket():
     except socket.error:
         print("Error creating tcp socket")
 
-def create_udp_socket():
-    try: 
-        #Create a UDP socket
-        print('Create UDP socket')
-        multicast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        multicast_socket.bind(MULTICAST_SERVER_ADDR)
-        #Tell the operating system to add the socket to the multicast group
-        #on all interfaces.
-        group = socket.inet_aton(MULTICAST_GROUP)
-        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
-        multicast_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-        return multicast_socket
+def create_udp_receive_socket():
+    try:
+        multicast_receive_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        multicast_receive_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 32) 
+        multicast_receive_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
+        #allow reuse of socket (to allow another instance of python running this
+        #script binding to the same ip/port)
+        multicast_receive_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #Bind to the server address
+        multicast_receive_socket.bind(MULTICAST_SERVER_ADDR)
+        host = socket.gethostbyname(socket.gethostname())
+        multicast_receive_socket.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(host))
+        multicast_receive_socket.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, 
+                        socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton(host))
+        return multicast_receive_socket
     except socket.error:
         print("Error creating udp socket")
 
@@ -120,7 +123,7 @@ if __name__ == "__main__":
     server_port = 3000
     p = None
 
-    multicast_socket = create_udp_socket()
+    multicast_socket = create_udp_receive_socket()
 
     #Wait for Leader message on multicast channel
     while True:
@@ -129,7 +132,7 @@ if __name__ == "__main__":
             data, address = multicast_socket.recvfrom(1024)
             print('received %s from %s' % (data, address))
             multicast_socket.sendto(b'ack', address)
-            if "LEADER" in data:
+            if b"LEADER" in data:
                 server_address = address[0]
                 break
         
