@@ -122,6 +122,7 @@ class Multicast(object):
             self.multicast_message =  b'LEADER Server ' + bytes(self.args[0], 'utf-8')
         else:
             self.multicast_message =  b'Server ' + bytes(self.args[0], 'utf-8')
+        self.multicast_message =  b'LEADER Server ' + bytes(self.args[0], 'utf-8')
         #Send data to the multicast group
         print("Send message to multicast group: ", self.multicast_message)
         self.multicast_transmit_socket.sendto(self.multicast_message, (MULTICAST_GROUP, 10000))

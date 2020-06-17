@@ -23,7 +23,7 @@ TIMEOUT = 5000
 #Receive buffer size
 BUFFER_SIZE = 1024
 #Use path of FritzBox NAS space 
-FILENAME = Path("Y:/Gastbereich/test.txt")
+FILENAME = Path("Y:/Gastbereich/file_received.txt")
 CS = Checksum(FILENAME)
 
 def create_tcp_socket():
@@ -97,7 +97,7 @@ def send_message(client_id, server_address, server_port):
                     else:
                         print("file corrupted while transmitting!!")
 
-                #Write txt content to file
+                #Write content to file
                 else:
                     f = open(FILENAME, "w")
                     f.write(data.decode())
