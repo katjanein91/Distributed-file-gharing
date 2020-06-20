@@ -59,10 +59,9 @@ class Multicast(object):
             print("Error creating udp receive socket")
 
     def reset_group(self):
-        if (len(self.group) != 3 and self.current_runtime.seconds > 10):
-            print("reset group view: ", time.ctime())
-            self.group = {}
-            threading.Timer(10.0, self.reset_group).start() 
+        print("reset group view: ", time.ctime())
+        self.group = {}
+        threading.Timer(10.0, self.reset_group).start() 
 
     def update_group(self):
         server_address = ""
@@ -75,6 +74,7 @@ class Multicast(object):
             server_address = address[0]
 
             if "LEADER" in data.decode():
+                self.leader_ip = server_address
                 self.leader_selected == True
 
             if "Server ID" in data.decode():
@@ -95,17 +95,15 @@ class Multicast(object):
                 sorted_ids = sorted(server_ids)
                 #avoid -1 index out of range
                 nodes = [LCR(sorted_ids[0])]
-                for i in range(len(sorted_ids) - 1):
+                for i in range(1, len(sorted_ids)):
                     node = LCR(sorted_ids[i])
                     #Tell the current node in nodes array the right neighbour 
                     nodes[-1].next_node = node
                     nodes.append(node)
                 #Tell the last node in nodes array the right neighbour 
                 nodes[-1].next_node = nodes[0]
-
+                #First node starts election
                 nodes[0].start_election()
-                if nodes[0].leader != False:
-                    self.leader_selected = True
             
             if (len(self.group) == 1) and self.leader_selected == False:
                 self.leader_ip = self.server_ip
