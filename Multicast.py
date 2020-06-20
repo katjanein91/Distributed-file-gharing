@@ -16,7 +16,7 @@ class Multicast(object):
             self.group = {}
             self.leader_selected = False
             self.leader_ip = None
-            self.leader_id = False
+            self.leader_id = 0
             self.start_time = datetime.now()
             self.current_runtime = 0
             self.args = args
@@ -121,10 +121,10 @@ class Multicast(object):
 
     def send_message(self):
         print("Group view: ", self.group)
-        if (self.leader_id == self.server_id):
-            self.multicast_message =  b'LEADER Server ID ' + bytes(self.args[0], 'utf-8')
+        if (self.leader_id == int(self.server_id)):
+            self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8')
         else:
-            self.multicast_message =  b'Server ID ' + bytes(self.args[0], 'utf-8')
+            self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8')
 
         #Send data to the multicast group
         print("Send message to multicast group: ", self.multicast_message)
