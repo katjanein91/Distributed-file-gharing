@@ -16,6 +16,7 @@ class Multicast(object):
             self.group = {}
             self.leader_selected = False
             self.leader_ip = None
+            self.is_leader = False
             self.start_time = datetime.now()
             self.current_runtime = 0
             self.args = args
@@ -61,7 +62,7 @@ class Multicast(object):
     def reset_group(self):
         print("reset group view: ", time.ctime())
         self.group = {}
-        threading.Timer(10.0, self.reset_group).start() 
+        threading.Timer(30.0, self.reset_group).start() 
 
     def update_group(self):
         server_address = ""
@@ -94,7 +95,8 @@ class Multicast(object):
                 server_ids=list(self.group.keys())
                 sorted_ids = sorted(server_ids)
                 #avoid -1 index out of range
-                nodes = [LCR(sorted_ids[0])]
+                lcr = LCR(sorted_ids[0])
+                nodes = [lcr]
                 for i in range(1, len(sorted_ids)):
                     node = LCR(sorted_ids[i])
                     #Tell the current node in nodes array the right neighbour 
@@ -104,6 +106,7 @@ class Multicast(object):
                 nodes[-1].next_node = nodes[0]
                 #First node starts election
                 nodes[0].start_election()
+                self.is_leader = lcr.is_leader
 
             #All 3 nodes has to be up within 10 seconds 
             #If a node goes down and a leader is selected, start a new election
@@ -118,7 +121,7 @@ class Multicast(object):
 
     def send_message(self):
         print(self.group)
-        if (self.leader_ip == self.server_ip):
+        if (self.is_leader):
             self.multicast_message =  b'LEADER Server ID ' + bytes(self.args[0], 'utf-8')
         else:
             self.multicast_message =  b'Server ID ' + bytes(self.args[0], 'utf-8')

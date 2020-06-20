@@ -23,11 +23,11 @@ class LCR:
         group, uuid = message
         if group == ELECTION:
             if uuid > self.server_id:
-                print("Server {} is forwarding without updates.".format(self.server_id))
+                #print("Server {} is forwarding without updates.".format(self.server_id))
                 self.is_participant = True
                 self.forward((ELECTION, uuid))
             if uuid < self.server_id:
-                print("Server {} is updating and forwarding.".format(self.server_id))
+                #print("Server {} is updating and forwarding.".format(self.server_id))
                 self.is_participant = True
                 self.forward((ELECTION, self.server_id))
             if uuid == self.server_id:
@@ -38,9 +38,9 @@ class LCR:
                 self.forward((NEW_LEAD, self.server_id))
         if group == NEW_LEAD:
             if uuid == self.server_id:
-                return
+                return 
             if uuid != self.server_id:
-                print("Server {} acknowledged new leader.".format(self.server_id))
+                #print("Server {} acknowledged new leader.".format(self.server_id))
                 self.leader = uuid
                 self.forward((NEW_LEAD, uuid))
 
