@@ -14,6 +14,7 @@ MULTICAST_SERVER_ADDR = ("", 10000)
 class Multicast(object):
     def __init__(self, *args):
             self.group = {}
+            self.desired_group_length = 3
             self.leader_selected = False
             self.leader_ip = None
             self.leader_id = 0
@@ -110,8 +111,14 @@ class Multicast(object):
                 self.leader_id = lcr.leader
 
             #If a node goes down and a leader is selected, start a new election
-            if (len(self.group) < 3) and self.leader_selected == True:
+            if (len(self.group) < self.desired_group_length) and self.leader_selected == True:
                 self.leader_selected = False
+                if (len(self.group) < 3):
+                    self.desired_group_length = 2
+                elif (len(self.group) < 2):
+                    self.desired_group_length = 1
+                else:
+                    self.desired_group_length = 3
 
         except socket.timeout:
             print("timeout receiving over udp socket")
