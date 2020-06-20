@@ -105,7 +105,7 @@ class Multicast(object):
             if (len(self.group) == 1) and self.leader_selected == False:
                 self.leader_ip = server[1]
                 print("Leader IP is: " + self.leader_ip)
-                
+
             #All 3 nodes has to be up within 10 seconds 
             #If a node goes down and a leader is selected, start a new election
             if (len(self.group) < 3) and (self.current_runtime.seconds > 10) and self.leader_selected == True:
@@ -135,7 +135,8 @@ class Multicast(object):
                 self.send_message()
                 #Update the group view
                 group_view = self.update_group(server)
-                print(group_view)
+                if (len(group_view > 1)):
+                    print(group_view)
                 time.sleep(5)
         except KeyboardInterrupt:
             print("caught keyboard interrupt, exiting")
