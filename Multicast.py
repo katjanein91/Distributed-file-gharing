@@ -77,7 +77,7 @@ class Multicast(object):
             server_address = address[0]
 
             if "Server ID" in data.decode():
-                server_id=data.decode().split("Server ID",1)[1].strip()
+                server_id=int(data.decode().split("Server ID",1)[1].strip())
                 
             print('received "%s" from server %s %s' % (data, address, server_id))  
             #print('sending acknowledgement to', address)
@@ -89,16 +89,13 @@ class Multicast(object):
             #Start leader election
             if (len(self.group) > 1) and self.leader_selected == False:
             #if (len(self.group) == 1) and self.leader_selected == False:
-                #ring = Ring(self.group)
-                #sorted_ips = ring.form_ring()
-                server_ids=[]
-                for key in self.group:
-                    server_ids.append(int(key))
+                server_ids=list(self.group.keys())
+                sorted_ids = sorted(server_ids)
     
-                count = len(server_ids)
-                nodes = [LCR(None, server_ids)]
+                count = len(sorted_ids)
+                nodes = [LCR(None, sorted_ids)]
                 for _ in range(count - 1):
-                    node = LCR(None, server_ids)
+                    node = LCR(None, sorted_ids)
                     nodes[-1].next_node = node
                     nodes.append(node)
                 nodes[-1].next_node = nodes[0]
