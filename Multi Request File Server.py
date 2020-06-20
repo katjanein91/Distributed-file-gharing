@@ -17,7 +17,7 @@ from pathlib import Path
 import threading
 
 #Pass Server ID string from command line argument
-SERVER_ID = 1
+SERVER_ID = "1"
 if((len(sys.argv) - 1) >= 1):
     SERVER_ID = sys.argv[1]  
 #Transfer socket
@@ -44,7 +44,7 @@ class Server(multiprocessing.Process):
         self.client_address = client_address
 
     def run(self):
-        print('This is server ' + str(SERVER_ID) + ' with process id ' + str(os.getpid()))
+        print('This is server ' + SERVER_ID + ' with process id ' + str(os.getpid()))
         if self.received_data and self.msg=='file':
             #Transmit file over socket
             send_file(self.connection, self.client_address)

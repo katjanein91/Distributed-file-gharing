@@ -14,7 +14,7 @@ MULTICAST_SERVER_ADDR = ("", 10000)
 #Thread 
 class Multicast(object):
     def __init__(self, *args):
-            self.group = []
+            self.group = {}
             #Set function with timer to reset the group view every X seconds
             self.reset_group()
             self.leader_selected = False
@@ -63,24 +63,28 @@ class Multicast(object):
 
     def reset_group(self):
         print("reset group view: ", time.ctime())
-        self.group = []
+        self.group = {}
         threading.Timer(2.0, self.reset_group).start() 
 
     def update_group(self, server):
         server_address = ""
         print('\nwaiting to receive message')
         try:
-            data, address = self.multicast_receive_socket.recvfrom(16)
+            data, address = self.multicast_receive_socket.recvfrom(1024)
+            server_id=0
             time = datetime.now()
             self.current_runtime = time - self.start_time
             server_address = address[0]
 
-            print('received "%s" from %s' % (data, address))  
+            if "Server ID" in data.decode():
+                server_id=data.decode().split("Server ID",1)[1].strip()
+                
+            print('received "%s" from server %s %s' % (data, address, server_id))  
             #print('sending acknowledgement to', address)
             #self.multicast_socket.sendto(b'ack', address)
             #Create group
             if not server_address in self.group:
-                self.group.append(server_address)
+                self.group.update({server_id:server_address})
 
             #Start leader election
             if (len(self.group) > 1) and self.leader_selected == False:
@@ -118,9 +122,9 @@ class Multicast(object):
 
     def send_message(self):
         if (self.leader_ip == self.server_ip):
-            self.multicast_message =  b'LEADER Server ' + bytes(self.args[0], 'utf-8')
+            self.multicast_message =  b'LEADER Server ID ' + bytes(self.args[0], 'utf-8')
         else:
-            self.multicast_message =  b'Server ' + bytes(self.args[0], 'utf-8')
+            self.multicast_message =  b'Server ID ' + bytes(self.args[0], 'utf-8')
 
         #Send data to the multicast group
         print("Send message to multicast group: ", self.multicast_message)
@@ -135,8 +139,7 @@ class Multicast(object):
                 self.send_message()
                 #Update the group view
                 group_view = self.update_group(server)
-                if (len(group_view) > 1):
-                    print(group_view)
+                print(group_view)
                 time.sleep(5)
         except KeyboardInterrupt:
             print("caught keyboard interrupt, exiting")
