@@ -104,10 +104,6 @@ class Multicast(object):
                 nodes[-1].next_node = nodes[0]
                 #First node starts election
                 nodes[0].start_election()
-            
-            if (len(self.group) == 1) and self.leader_selected == False:
-                self.leader_ip = self.server_ip
-                print("Leader IP is: " + self.leader_ip)
 
             #All 3 nodes has to be up within 10 seconds 
             #If a node goes down and a leader is selected, start a new election
