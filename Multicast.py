@@ -135,7 +135,7 @@ class Multicast(object):
                 self.send_message()
                 #Update the group view
                 group_view = self.update_group(server)
-                if (len(group_view > 1)):
+                if (len(group_view) > 1):
                     print(group_view)
                 time.sleep(5)
         except KeyboardInterrupt:
