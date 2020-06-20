@@ -58,18 +58,13 @@ class Multicast(object):
             self.multicast_receive_socket.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(host))
             self.multicast_receive_socket.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, 
                             socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton(host))
-            #Tell the operating system to add the socket to the multicast group
-            #on all interfaces.
-            # group = socket.inet_aton(MULTICAST_GROUP)
-            # mreq = struct.pack('4sL', group, socket.INADDR_ANY)
-            # self.multicast_receive_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         except socket.error:
             print("Error creating udp receive socket")
 
     def reset_group(self):
         print("reset group view: ", time.ctime())
         self.group = []
-        threading.Timer(10.0, self.reset_group).start() 
+        threading.Timer(2.0, self.reset_group).start() 
 
     def update_group(self, server):
         server_address = ""
@@ -106,7 +101,11 @@ class Multicast(object):
                     if nodes[0].leader == server[1]:
                         self.leader_ip = server[1]
                         print("Leader IP is: " + self.leader_ip)
-
+            
+            if (len(self.group) == 1) and self.leader_selected == False:
+                self.leader_ip = server[1]
+                print("Leader IP is: " + self.leader_ip)
+                
             #All 3 nodes has to be up within 10 seconds 
             #If a node goes down and a leader is selected, start a new election
             if (len(self.group) < 3) and (self.current_runtime.seconds > 10) and self.leader_selected == True:
