@@ -4,9 +4,9 @@ ELECTION = 0
 NEW_LEAD = 1
 
 class LCR:
-    def __init__(self, node, server_group):
-        self.next_node = node
-        self.server_id = int(server_group[0])
+    def __init__(self, server_id):
+        self.next_node = None
+        self.server_id = int(server_id)
         self.is_participant = False
         self.is_leader = False
         self.leader = False

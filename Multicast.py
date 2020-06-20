@@ -14,8 +14,6 @@ MULTICAST_SERVER_ADDR = ("", 10000)
 class Multicast(object):
     def __init__(self, *args):
             self.group = {}
-            #Set function with timer to reset the group view every X seconds
-            self.reset_group()
             self.leader_selected = False
             self.leader_ip = None
             self.start_time = datetime.now()
@@ -61,7 +59,7 @@ class Multicast(object):
             print("Error creating udp receive socket")
 
     def reset_group(self):
-        if (len(self.group) != 3):
+        if (len(self.group) != 3 and self.current_runtime.seconds > 10):
             print("reset group view: ", time.ctime())
             self.group = {}
             threading.Timer(10.0, self.reset_group).start() 
@@ -76,28 +74,33 @@ class Multicast(object):
             self.current_runtime = time - self.start_time
             server_address = address[0]
 
+            if "LEADER" in data.decode():
+                self.leader_selected == True
+
             if "Server ID" in data.decode():
                 server_id=int(data.decode().split("Server ID",1)[1].strip())
                 
-            print('received "%s" from server %s %s' % (data, address, server_id))  
+            print('received "%s" from server %s' % (data, address))  
             #print('sending acknowledgement to', address)
             #self.multicast_socket.sendto(b'ack', address)
             #Create group
-            if not server_address in self.group:
+            if not server_address in self.group.values():
                 self.group[server_id]=server_address
 
             #Start leader election
             if (len(self.group) > 1) and self.leader_selected == False:
             #if (len(self.group) == 1) and self.leader_selected == False:
+                #Sort IDs and build a ring of server nodes for lcr
                 server_ids=list(self.group.keys())
                 sorted_ids = sorted(server_ids)
-    
-                count = len(sorted_ids)
-                nodes = [LCR(None, sorted_ids)]
-                for _ in range(count - 1):
-                    node = LCR(None, sorted_ids)
+                #avoid -1 index out of range
+                nodes = [LCR(sorted_ids[0])]
+                for i in range(len(sorted_ids) - 1):
+                    node = LCR(sorted_ids[i])
+                    #Tell the current node in nodes array the right neighbour 
                     nodes[-1].next_node = node
                     nodes.append(node)
+                #Tell the last node in nodes array the right neighbour 
                 nodes[-1].next_node = nodes[0]
 
                 nodes[0].start_election()
@@ -111,15 +114,16 @@ class Multicast(object):
             #All 3 nodes has to be up within 10 seconds 
             #If a node goes down and a leader is selected, start a new election
             if (len(self.group) < 3) and (self.current_runtime.seconds > 10) and self.leader_selected == True:
-                print("Starting new leader election...")
                 self.leader_selected = False
+
         except socket.timeout:
             print("timeout receiving over udp socket")
             pass
-        print(self.group)
+      
         threading.Timer(5.0, self.update_group).start()  
 
     def send_message(self):
+        print(self.group)
         if (self.leader_ip == self.server_ip):
             self.multicast_message =  b'LEADER Server ID ' + bytes(self.args[0], 'utf-8')
         else:
@@ -137,6 +141,8 @@ class Multicast(object):
             self.send_message()
             #Update the group view
             self.update_group()
+            #Set function with timer to reset the group view every X seconds
+            self.reset_group()
         except KeyboardInterrupt:
             print("caught keyboard interrupt, exiting")
 
