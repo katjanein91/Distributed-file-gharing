@@ -16,7 +16,7 @@ class Multicast(object):
             self.group = {}
             self.leader_selected = False
             self.leader_ip = None
-            self.is_leader = False
+            self.leader_id = False
             self.start_time = datetime.now()
             self.current_runtime = 0
             self.args = args
@@ -106,7 +106,7 @@ class Multicast(object):
                 nodes[-1].next_node = nodes[0]
                 #First node starts election
                 nodes[0].start_election()
-                self.is_leader = lcr.is_leader
+                self.leader_id = lcr.leader
 
             #All 3 nodes has to be up within 10 seconds 
             #If a node goes down and a leader is selected, start a new election
@@ -120,8 +120,8 @@ class Multicast(object):
         threading.Timer(5.0, self.update_group).start()  
 
     def send_message(self):
-        print(self.group)
-        if (self.is_leader):
+        print("Group view: ", self.group)
+        if (self.leader_id == self.server_id):
             self.multicast_message =  b'LEADER Server ID ' + bytes(self.args[0], 'utf-8')
         else:
             self.multicast_message =  b'Server ID ' + bytes(self.args[0], 'utf-8')
