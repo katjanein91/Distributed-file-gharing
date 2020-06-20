@@ -64,7 +64,7 @@ class Multicast(object):
     def reset_group(self):
         print("reset group view: ", time.ctime())
         self.group = {}
-        threading.Timer(2.0, self.reset_group).start() 
+        threading.Timer(15.0, self.reset_group).start() 
 
     def update_group(self, server):
         server_address = ""
@@ -84,17 +84,21 @@ class Multicast(object):
             #self.multicast_socket.sendto(b'ack', address)
             #Create group
             if not server_address in self.group:
-                self.group.update({server_id:server_address})
+                self.group[server_id]=server_address
 
             #Start leader election
             if (len(self.group) > 1) and self.leader_selected == False:
             #if (len(self.group) == 1) and self.leader_selected == False:
                 #ring = Ring(self.group)
                 #sorted_ips = ring.form_ring()
-                count = len(self.group)
-                nodes = [LCR(None, self.group)]
+                server_ids=[]
+                for key in self.group:
+                    server_ids.append(int(key))
+    
+                count = len(server_ids)
+                nodes = [LCR(None, server_ids)]
                 for _ in range(count - 1):
-                    node = LCR(None, self.group)
+                    node = LCR(None, server_ids)
                     nodes[-1].next_node = node
                     nodes.append(node)
                 nodes[-1].next_node = nodes[0]
