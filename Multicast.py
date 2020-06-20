@@ -62,7 +62,7 @@ class Multicast(object):
     def reset_group(self):
         print("reset group view: ", time.ctime())
         self.group = {}
-        threading.Timer(30.0, self.reset_group).start() 
+        threading.Timer(60.0, self.reset_group).start() 
 
     def update_group(self):
         server_address = ""
@@ -76,7 +76,7 @@ class Multicast(object):
 
             if "LEADER" in data.decode():
                 self.leader_ip = server_address
-                self.leader_selected == True
+                self.leader_selected = True
 
             if "Server ID" in data.decode():
                 server_id=int(data.decode().split("Server ID",1)[1].strip())
@@ -88,8 +88,9 @@ class Multicast(object):
             if not server_address in self.group.values():
                 self.group[server_id]=server_address
 
+            #All 3 nodes has to be up within 10 seconds 
             #Start leader election
-            if (len(self.group) > 1) and self.leader_selected == False:
+            if (len(self.group) > 1) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
             #if (len(self.group) == 1) and self.leader_selected == False:
                 #Sort IDs and build a ring of server nodes for lcr
                 server_ids=list(self.group.keys())
@@ -108,9 +109,8 @@ class Multicast(object):
                 nodes[0].start_election()
                 self.leader_id = lcr.leader
 
-            #All 3 nodes has to be up within 10 seconds 
             #If a node goes down and a leader is selected, start a new election
-            if (len(self.group) < 3) and (self.current_runtime.seconds > 10) and self.leader_selected == True:
+            if (len(self.group) < 3) and self.leader_selected == True:
                 self.leader_selected = False
 
         except socket.timeout:
