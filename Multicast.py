@@ -3,7 +3,6 @@ import struct
 import sys
 import json
 import threading, time
-from Ring import Ring
 from LCR import LCR
 from datetime import datetime
 
@@ -62,11 +61,12 @@ class Multicast(object):
             print("Error creating udp receive socket")
 
     def reset_group(self):
-        print("reset group view: ", time.ctime())
-        self.group = {}
-        threading.Timer(15.0, self.reset_group).start() 
+        if (len(self.group) != 3):
+            print("reset group view: ", time.ctime())
+            self.group = {}
+            threading.Timer(10.0, self.reset_group).start() 
 
-    def update_group(self, server):
+    def update_group(self):
         server_address = ""
         print('\nwaiting to receive message')
         try:
@@ -103,12 +103,9 @@ class Multicast(object):
                 nodes[0].start_election()
                 if nodes[0].leader != False:
                     self.leader_selected = True
-                    if nodes[0].leader == server[1]:
-                        self.leader_ip = server[1]
-                        print("Leader IP is: " + self.leader_ip)
             
             if (len(self.group) == 1) and self.leader_selected == False:
-                self.leader_ip = server[1]
+                self.leader_ip = self.server_ip
                 print("Leader IP is: " + self.leader_ip)
 
             #All 3 nodes has to be up within 10 seconds 
@@ -119,7 +116,8 @@ class Multicast(object):
         except socket.timeout:
             print("timeout receiving over udp socket")
             pass
-        return self.group
+        print(self.group)
+        threading.Timer(5.0, self.update_group).start()  
 
     def send_message(self):
         if (self.leader_ip == self.server_ip):
@@ -130,18 +128,15 @@ class Multicast(object):
         #Send data to the multicast group
         print("Send message to multicast group: ", self.multicast_message)
         self.multicast_transmit_socket.sendto(self.multicast_message, (MULTICAST_GROUP, 10000))
+        threading.Timer(10.0, self.send_message).start() 
 
     def run(self):
-        server = [self.server_id, self.server_ip]
         self.create_udp_transmit_socket()
         self.create_udp_receive_socket()
         try:
-            while True:
-                self.send_message()
-                #Update the group view
-                group_view = self.update_group(server)
-                print(group_view)
-                time.sleep(5)
+            self.send_message()
+            #Update the group view
+            self.update_group()
         except KeyboardInterrupt:
             print("caught keyboard interrupt, exiting")
 
