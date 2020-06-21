@@ -9,6 +9,9 @@ from datetime import datetime
 #IP Multicast group
 MULTICAST_GROUP="224.0.0.0"
 MULTICAST_SERVER_ADDR = ("", 10000)
+MSG_SEND_INTERVAL = 5.0
+GROUP_UPDATE_INTERVAL = 2.0
+COUNTER_CHECK_INTERVAL = 10.0
 
 #Thread 
 class Multicast(object):
@@ -70,16 +73,18 @@ class Multicast(object):
                 #print(key)
                 counter = self.server_msg_count.get(key)
                 #print(counter)
-                if (counter == 5):
+                #Reset the counter after the check time interval
+                if (counter > 0):
                     self.server_msg_count[key] = 0
                 #Server sent no messages within the check time interval
                 elif (counter == 0):
                     del self.server_msg_count[key]
                     del self.group[key]
-                    print('remove server %s from list', key)
+                    print('remove server %d from list' % (key))
                     break
 
-        threading.Timer(10.0, self.check_counter).start() 
+        #Start Thread every X seconds
+        threading.Timer(COUNTER_CHECK_INTERVAL, self.check_counter).start() 
 
     def update_group(self):
         server_address = ""
@@ -93,15 +98,13 @@ class Multicast(object):
 
             if "Server ID" in data.decode():
                 server_id=int(data.decode().split("Server ID",1)[1].strip())
-                #if (len(self.group) == 3):
-                if (len(self.group) == 1 and len(self.server_msg_count) > 0):
+                if (len(self.group) == 3 and len(self.server_msg_count) > 0):
                     self.server_msg_count[server_id] = self.server_msg_count[server_id] + 1
 
             if not server_address in self.group.values():
                 self.group[server_id]=server_address
             
-            #if (len(self.group) == 3):
-            if (len(self.group) == 1 and len(self.server_msg_count) == 0):
+            if (len(self.group) == 3 and len(self.server_msg_count) == 0):
                 server_ids=list(self.group.keys())
                 self.sorted_ids = sorted(server_ids)
                 self.server_msg_count=dict.fromkeys(self.sorted_ids, 0)
@@ -117,7 +120,6 @@ class Multicast(object):
             #All 3 nodes has to be up within 10 seconds 
             #Start leader election
             if (len(self.group) > 1) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
-            #if (len(self.group) == 1) and self.leader_selected == False:
                 #avoid -1 index out of range
                 lcr = LCR(self.sorted_ids[0])
                 nodes = [lcr]
@@ -145,8 +147,9 @@ class Multicast(object):
         except socket.timeout:
             print("timeout receiving over udp socket")
             pass
-      
-        threading.Timer(5.0, self.update_group).start()  
+            
+        #Start Thread every X seconds
+        threading.Timer(GROUP_UPDATE_INTERVAL, self.update_group).start()  
 
     def send_message(self):
         print("Group view: ", self.group)
@@ -158,7 +161,9 @@ class Multicast(object):
         #Send data to the multicast group
         print("Send message to multicast group: ", self.multicast_message)
         self.multicast_transmit_socket.sendto(self.multicast_message, (MULTICAST_GROUP, 10000))
-        threading.Timer(10.0, self.send_message).start() 
+
+        #Start Thread every X seconds
+        threading.Timer(MSG_SEND_INTERVAL, self.send_message).start() 
 
     def run(self):
         self.create_udp_transmit_socket()
