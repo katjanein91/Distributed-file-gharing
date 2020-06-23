@@ -57,6 +57,9 @@ def create_udp_receive_socket():
 def send_message(client_id, server_address, server_port):
     client_id += 1
     print('This is client ' + str(client_id) + ' with process id ' + str(os.getpid()))
+    checksum_checked = False
+    file_written = False
+    operations_done = False
 
     client_socket = create_tcp_socket()
     try:
@@ -78,18 +81,17 @@ def send_message(client_id, server_address, server_port):
         print("Error sending file request")
 
     try: 
-        while True:
+        while operations_done == False:
             # Receive response
             print('Waiting for response...')
 
             try:
                 data = client_socket.recv(BUFFER_SIZE)
-                if not data:
-                    break
                 print('Received message from server: ', data.decode())   
 
                 #Check received checksum             
                 if "checksum" in data.decode():
+                    checksum_checked = True
                     received_checksum = data.decode().split("=")[1]
                     checksum = CS.generate_digest()
                     if received_checksum == checksum:
@@ -102,6 +104,11 @@ def send_message(client_id, server_address, server_port):
                     f = open(FILENAME, "w")
                     f.write(data.decode())
                     f.close()
+                    file_written = True
+
+                if file_written and checksum_checked:
+                    print("All operations done")
+                    operations_done = True
                         
             except socket.timeout:
                 print("Timeout for receiving data")
@@ -112,11 +119,14 @@ def send_message(client_id, server_address, server_port):
         print("caught keyboard interrupt, exiting")
         print("Closing socket")
         client_socket.close()
+        sys.exit(1)
 
     #Operations are finished, Socket can be closed
-    if client_id == 3:
+    finally:
+        print("Operations finished, closing socket")
         client_socket.close()
-        print('Socket closed')
+        sys.exit(1)
+
         
 if __name__ == "__main__":
     server_address = ""
@@ -131,7 +141,7 @@ if __name__ == "__main__":
             print('Waiting for message on multicast channel...')
             data, address = multicast_socket.recvfrom(1024)
             print('received %s from %s' % (data, address))
-            multicast_socket.sendto(b'ack', address)
+            multicast_socket.sendto(b'Leader acknowledged', address)
             if b"LEADER" in data:
                 server_address = address[0]
                 break
@@ -148,9 +158,5 @@ if __name__ == "__main__":
         p.terminate()
         sys.exit(1)
 
-    time.sleep(10)
-    print("finished")
-    p.terminate()
-    sys.exit()
-    
+
 
