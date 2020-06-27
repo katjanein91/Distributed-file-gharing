@@ -137,14 +137,18 @@ if __name__ == "__main__":
 
     #Wait for Leader message on multicast channel
     while True:
-        if multicast_socket != None:
-            print('Waiting for message on multicast channel...')
-            data, address = multicast_socket.recvfrom(1024)
-            print('received %s from %s' % (data, address))
-            multicast_socket.sendto(b'Leader acknowledged', address)
-            if b"LEADER" in data:
-                server_address = address[0]
-                break
+        try:
+            if multicast_socket != None:
+                print('Waiting for message on multicast channel...')
+                data, address = multicast_socket.recvfrom(1024)
+                print('received %s from %s' % (data, address))
+                multicast_socket.sendto(b'Leader acknowledged', address)
+                if b"LEADER" in data:
+                    server_address = address[0]
+                    break
+        except KeyboardInterrupt:
+            print("caught keyboard interrupt, exiting")
+            sys.exit(1)
         
     try:
         #Start 1 process of each client

@@ -1,6 +1,7 @@
 import socket
 import struct
 import sys
+import signal
 import json
 import threading, time
 from LCR import LCR
@@ -11,7 +12,7 @@ MULTICAST_GROUP="224.0.0.0"
 MULTICAST_SERVER_ADDR = ("", 10000)
 MSG_SEND_INTERVAL = 5.0
 GROUP_UPDATE_INTERVAL = 2.0
-COUNTER_CHECK_INTERVAL = 10.0
+COUNTER_CHECK_INTERVAL = 10.0    
 
 #Thread 
 class Multicast(object):
@@ -31,9 +32,16 @@ class Multicast(object):
             self.multicast_transmit_socket = None
             self.multicast_receive_socket = None
             self.multicast_message = ""
+            #Ctrl + C handling
+            self.terminate = False  
+            signal.signal(signal.SIGINT,self.signal_handling) 
             thread = threading.Thread(target=self.run, args=())
             thread.daemon = True                            # Daemonize thread
             thread.start()                                  # Start the execution
+
+    def signal_handling(self,signum,frame):           
+        print("ctrl-c pressed")                         
+        self.terminate = True 
 
     def create_udp_transmit_socket(self):
         try:
@@ -87,6 +95,9 @@ class Multicast(object):
         threading.Timer(COUNTER_CHECK_INTERVAL, self.check_counter).start() 
 
     def update_group(self):
+        if self.terminate:
+            print("caught keyboard interrupt, exiting")
+            sys.exit(1)
         server_address = ""
         print('\nwaiting to receive message')
         try:
@@ -168,14 +179,13 @@ class Multicast(object):
     def run(self):
         self.create_udp_transmit_socket()
         self.create_udp_receive_socket()
-        try:
-            self.send_message()
-            #Update the group view
-            self.update_group()
-            #Set function with timer to check msg counter every X seconds
-            self.check_counter()
-        except KeyboardInterrupt:
-            print("caught keyboard interrupt, exiting")
+
+        self.send_message()
+        #Update the group view
+        self.update_group()
+        #Set function with timer to check msg counter every X seconds
+        self.check_counter()
+   
 
 
 

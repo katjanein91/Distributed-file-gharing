@@ -32,7 +32,7 @@ Multicast = Multicast(SERVER_ID, IP)
 # get the file size
 FILESIZE = os.path.getsize(FILENAME)
 #Receive buffer size
-BUFFER_SIZE = 1024
+BUFFER_SIZE = 1024              
 
 #Server Thread
 class Server(multiprocessing.Process):
