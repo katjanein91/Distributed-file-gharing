@@ -32,16 +32,15 @@ class Multicast(object):
             self.multicast_transmit_socket = None
             self.multicast_receive_socket = None
             self.multicast_message = ""
-            #Ctrl + C handling
-            self.terminate = False  
             signal.signal(signal.SIGINT,self.signal_handling) 
             thread = threading.Thread(target=self.run, args=())
             thread.daemon = True                            # Daemonize thread
             thread.start()                                  # Start the execution
 
+    #Ctrl + C handling
     def signal_handling(self,signum,frame):           
-        print("ctrl-c pressed")                         
-        self.terminate = True 
+        print("caught keyboard interrupt, exiting")
+        sys.exit(1)
 
     def create_udp_transmit_socket(self):
         try:
@@ -95,9 +94,6 @@ class Multicast(object):
         threading.Timer(COUNTER_CHECK_INTERVAL, self.check_counter).start() 
 
     def update_group(self):
-        if self.terminate:
-            print("caught keyboard interrupt, exiting")
-            sys.exit(1)
         server_address = ""
         print('\nwaiting to receive message')
         try:
