@@ -77,9 +77,7 @@ class Multicast(object):
         #self.group = {}
         if ((len(self.server_msg_count) > 0) and (self.current_runtime.seconds > 10)):
             for key in self.server_msg_count.keys():
-                #print(key)
                 counter = self.server_msg_count.get(key)
-                #print(counter)
                 #Reset the counter after the check time interval
                 if (counter > 0):
                     self.server_msg_count[key] = 0
@@ -101,24 +99,19 @@ class Multicast(object):
             time = datetime.now()
             self.current_runtime = time - self.start_time
             server_address = address[0]
-            server_id=1
-
+       
             if "Server ID" in data.decode():
                 server_id=int(data.decode().split("Server ID",1)[1].strip())
-                if (len(self.group) == 3 and len(self.server_msg_count) > 0):
+                if (len(self.group) >= self.desired_group_length and server_id in self.server_msg_count):
                     self.server_msg_count[server_id] = self.server_msg_count[server_id] + 1
+                else:
+                    self.server_msg_count[server_id] = 1
 
-            if not server_address in self.group.values():
-                self.group[server_id]=server_address
-            
-            if (len(self.group) == 3 and len(self.server_msg_count) == 0):
-                server_ids=list(self.group.keys())
-                self.sorted_ids = sorted(server_ids)
-                self.server_msg_count=dict.fromkeys(self.sorted_ids, 0)
+                if not server_address in self.group.values():
+                    self.group[server_id]=server_address
 
             if "LEADER" in data.decode():
                 self.leader_ip = server_address
-                self.leader_selected = True
                 
             print('received "%s" from server %s' % (data, address))  
             #print('sending acknowledgement to', address)
@@ -126,7 +119,10 @@ class Multicast(object):
 
             #All 3 nodes has to be up within 10 seconds 
             #Start leader election
-            if (len(self.group) > 1) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
+            if (len(self.group) >= self.desired_group_length) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
+                server_ids=list(self.group.keys())
+                self.sorted_ids = sorted(server_ids)
+                self.server_msg_count=dict.fromkeys(self.sorted_ids, 0)
                 #avoid -1 index out of range
                 lcr = LCR(self.sorted_ids[0])
                 nodes = [lcr]
@@ -140,6 +136,10 @@ class Multicast(object):
                 #First node starts election
                 nodes[0].start_election()
                 self.leader_id = lcr.leader
+                self.leader_selected = True
+
+            elif (len(self.group) < self.desired_group_length) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
+                self.desired_group_length = 1
 
             #If a node goes down and a leader is selected, start a new election
             if (len(self.group) < self.desired_group_length) and self.leader_selected == True:
