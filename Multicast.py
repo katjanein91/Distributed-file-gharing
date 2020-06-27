@@ -139,15 +139,20 @@ class Multicast(object):
                 self.leader_selected = True
 
             elif (len(self.group) < self.desired_group_length) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
-                self.desired_group_length = 1
+                if (len(self.group) < 2):
+                    self.desired_group_length = 1
+                elif (len(self.group) < 3):
+                    self.desired_group_length = 2
+                else:
+                    self.desired_group_length = 3
 
             #If a node goes down and a leader is selected, start a new election
             if (len(self.group) < self.desired_group_length) and self.leader_selected == True:
                 self.leader_selected = False
-                if (len(self.group) < 3):
-                    self.desired_group_length = 2
-                elif (len(self.group) < 2):
+                if (len(self.group) < 2):
                     self.desired_group_length = 1
+                elif (len(self.group) < 1):
+                    self.desired_group_length = 2
                 else:
                     self.desired_group_length = 3
 
@@ -160,7 +165,7 @@ class Multicast(object):
 
     def send_message(self):
         print("Group view: ", self.group)
-        if (self.leader_id == int(self.server_id)):
+        if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
             self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8')
         else:
             self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8')
