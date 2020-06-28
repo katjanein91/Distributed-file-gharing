@@ -65,7 +65,7 @@ class Multicast(object):
             self.multicast_receive_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             #Bind to the server address
             self.multicast_receive_socket.bind(MULTICAST_SERVER_ADDR)
-            host = socket.gethostbyname(socket.gethostname())
+            host = self.server_ip
             self.multicast_receive_socket.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(host))
             self.multicast_receive_socket.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, 
                             socket.inet_aton(MULTICAST_GROUP) + socket.inet_aton(host))

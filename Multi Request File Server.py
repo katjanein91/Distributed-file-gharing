@@ -21,7 +21,11 @@ SERVER_ID = "1"
 if((len(sys.argv) - 1) >= 1):
     SERVER_ID = sys.argv[1]  
 #Transfer socket
-IP=socket.gethostbyname(socket.gethostname())
+#Determine correct host IP from adapter
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+IP=s.getsockname()[0]
+s.close()
 TCP_PORT = 3000
 #IP Multicast group with UDP socket port
 MULTICAST_GROUP=("224.0.0.0", 10000)
