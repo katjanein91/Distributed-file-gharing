@@ -22,11 +22,12 @@ class Multicast(object):
             self.desired_group_length = 3
             self.server_msg_count={}
             self.vector_clock = [0,0,0]
+            self.allowed_to_send = True
             self.leader_selected = False
             self.leader_ip = None
             self.leader_id = 0
             self.sorted_ids = []
-            self.start_time = datetime.now()
+            self.start_time = time.time()
             self.current_runtime = 0
             self.args = args
             self.server_id = self.args[0]
@@ -77,7 +78,7 @@ class Multicast(object):
     def check_counter(self):
         print("Check msg counter: ", time.ctime())
         #self.group = {}
-        if ((len(self.server_msg_count) > 0) and (self.current_runtime.seconds > 10)):
+        if ((len(self.server_msg_count) > 0) and (self.current_runtime > 10)):
             for key in self.server_msg_count.keys():
                 counter = self.server_msg_count.get(key)
                 #Reset the counter after the check time interval
@@ -98,8 +99,8 @@ class Multicast(object):
         print('\nwaiting to receive message')
         try:
             data, address = self.multicast_receive_socket.recvfrom(1024)
-            time = datetime.now()
-            self.current_runtime = time - self.start_time
+            now = time.time()
+            self.current_runtime = int(now % 60) - int(self.start_time % 60)
             server_address = address[0]
 
             if "Server ID" in data.decode():
@@ -131,7 +132,7 @@ class Multicast(object):
 
             #All 3 nodes has to be up within 10 seconds 
             #Start leader election
-            if (len(self.group) >= self.desired_group_length) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
+            if (len(self.group) >= self.desired_group_length) and (self.current_runtime > 10) and self.leader_selected == False:
                 server_ids=list(self.group.keys())
                 self.sorted_ids = sorted(server_ids)
                 self.server_msg_count=dict.fromkeys(self.sorted_ids, 0)
@@ -150,7 +151,7 @@ class Multicast(object):
                 self.leader_id = lcr.leader
                 self.leader_selected = True
 
-            elif (len(self.group) < self.desired_group_length) and (self.current_runtime.seconds > 10) and self.leader_selected == False:
+            elif (len(self.group) < self.desired_group_length) and (self.current_runtime > 10) and self.leader_selected == False:
                 if (len(self.group) < 2):
                     self.desired_group_length = 1
                 elif (len(self.group) < 3):
@@ -178,18 +179,27 @@ class Multicast(object):
     def send_message(self):
         print("Group view: ", self.group)
 
-        #Increase vector clock
-        self.vector_clock[int(self.server_id)-1] += 1
-        print('Process {} performed send event. Vector Clock is {}'.format(self.server_id, self.vector_clock))
-
-        if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
-            self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8') + b' vc=' + bytes(str(self.vector_clock), 'utf-8')
+        if (len(self.group) > 1 and (self.vector_clock.index(min(self.vector_clock)) + 1) == int(self.server_id)):
+            print("Allowed to send")
+            self.allowed_to_send = True
         else:
-            self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8') + b' vc=' + bytes(str(self.vector_clock), 'utf-8')
+            now = time.time()
+            if (int(now % 60) > (int(self.start_time % 60) + 10)):
+                self.allowed_to_send = False
 
-        #Send data to the multicast group
-        print("Send message to multicast group: ", self.multicast_message)
-        self.multicast_transmit_socket.sendto(self.multicast_message, (MULTICAST_GROUP, 10000))
+        if (self.allowed_to_send == True):
+            #Increase vector clock
+            self.vector_clock[int(self.server_id)-1] += 1
+            print('Process {} performed send event. Vector Clock is {}'.format(self.server_id, self.vector_clock))
+
+            if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
+                self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8') + b' vc=' + bytes(str(self.vector_clock), 'utf-8')
+            else:
+                self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8') + b' vc=' + bytes(str(self.vector_clock), 'utf-8')
+
+            #Send data to the multicast group
+            print("Send message to multicast group: ", self.multicast_message)
+            self.multicast_transmit_socket.sendto(self.multicast_message, (MULTICAST_GROUP, 10000))
 
         #Start Thread every X seconds
         threading.Timer(MSG_SEND_INTERVAL, self.send_message).start() 
