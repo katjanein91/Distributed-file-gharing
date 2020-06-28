@@ -3,6 +3,7 @@ import struct
 import sys
 import signal
 import json
+import re
 import threading, time
 from LCR import LCR
 from datetime import datetime
@@ -20,6 +21,7 @@ class Multicast(object):
             self.group = {}
             self.desired_group_length = 3
             self.server_msg_count={}
+            self.vector_clock = [0,0,0]
             self.leader_selected = False
             self.leader_ip = None
             self.leader_id = 0
@@ -101,11 +103,21 @@ class Multicast(object):
             server_address = address[0]
 
             if "Server ID" in data.decode():
-                server_id=int(data.decode().split("Server ID",1)[1].strip())
+                id_str=data.decode().split("Server ID",1)[1] 
+                server_id=[int(s) for s in re.findall(r'\b\d+\b', id_str)][0]
+
                 if (len(self.group) >= self.desired_group_length and server_id in self.server_msg_count):
                     self.server_msg_count[server_id] = self.server_msg_count[server_id] + 1
                 else:
                     self.server_msg_count[server_id] = 1
+
+                if "vc" in data.decode():
+                    received_vector_clock = data.decode().split("vc=",1)[1]
+                    received_vector_clock = [int(s) for s in re.findall(r'\b\d+\b', received_vector_clock)]
+
+                    print('received message from Process {}. Vector Clock is {}'.format(server_id, received_vector_clock))
+                    for id in range(len(self.vector_clock)):
+                        self.vector_clock[id-1] = max(received_vector_clock[id-1], self.vector_clock[id-1])
 
                 if not server_address in self.group.values():
                     self.group[server_id]=server_address
@@ -165,10 +177,15 @@ class Multicast(object):
 
     def send_message(self):
         print("Group view: ", self.group)
+
+        #Increase vector clock
+        self.vector_clock[int(self.server_id)-1] += 1
+        print('Process {} performed send event. Vector Clock is {}'.format(self.server_id, self.vector_clock))
+
         if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
-            self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8')
+            self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8') + b' vc=' + bytes(str(self.vector_clock), 'utf-8')
         else:
-            self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8')
+            self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8') + b' vc=' + bytes(str(self.vector_clock), 'utf-8')
 
         #Send data to the multicast group
         print("Send message to multicast group: ", self.multicast_message)
