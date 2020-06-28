@@ -49,7 +49,7 @@ class Multicast(object):
             self.multicast_transmit_socket.settimeout(10.0)
             #Set the time-to-live for messages to 1 so they do not go past the
             #local network segment.
-            ttl = struct.pack('b', 1)
+            ttl = struct.pack('b', 32)
             self.multicast_transmit_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
     
         except socket.error:
@@ -99,7 +99,7 @@ class Multicast(object):
             time = datetime.now()
             self.current_runtime = time - self.start_time
             server_address = address[0]
-       
+
             if "Server ID" in data.decode():
                 server_id=int(data.decode().split("Server ID",1)[1].strip())
                 if (len(self.group) >= self.desired_group_length and server_id in self.server_msg_count):
