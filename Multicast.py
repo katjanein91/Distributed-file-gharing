@@ -172,7 +172,7 @@ class Multicast(object):
     def send_message(self):
         print("Group view: ", self.group)
         #Increase vector clock
-        self.vector_clock[self.server_id-1] += 1
+        self.vector_clock[int(self.server_id)-1] += 1
         print('Process {} performed send event. Vector Clock is {}'.format(self.server_id, self.vector_clock))
 
         if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
