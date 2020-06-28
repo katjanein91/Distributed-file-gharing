@@ -20,6 +20,7 @@ class Multicast(object):
             self.group = {}
             self.desired_group_length = 3
             self.server_msg_count={}
+            self.vector_clock = [0,0,0]
             self.leader_selected = False
             self.leader_ip = None
             self.leader_id = 0
@@ -109,6 +110,11 @@ class Multicast(object):
 
                 if not server_address in self.group.values():
                     self.group[server_id]=server_address
+                if "vc" in data.decode():
+                    received_vector_clock = data.decode().split("vc",1)[1].strip()
+                    print('received message from Process {}. Vector Clock is {}'.format(server_id, received_vector_clock))
+                    for id in range(len(self.vector_clock)):
+                        self.vector_clock[id-1] = max(received_vector_clock[id-1], self.vector_clock[id-1])
 
             if "LEADER" in data.decode():
                 self.leader_ip = server_address
@@ -165,10 +171,14 @@ class Multicast(object):
 
     def send_message(self):
         print("Group view: ", self.group)
+        #Increase vector clock
+        self.vector_clock[self.server_id-1] += 1
+        print('Process {} performed send event. Vector Clock is {}'.format(self.server_id, self.vector_clock))
+
         if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
-            self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8')
+            self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8') + b' vc= ' + bytes(self.vector_clock)
         else:
-            self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8')
+            self.multicast_message =  b'Server ID ' + bytes(self.server_id, 'utf-8') + b' vc= ' + bytes(self.vector_clock)
 
         #Send data to the multicast group
         print("Send message to multicast group: ", self.multicast_message)
