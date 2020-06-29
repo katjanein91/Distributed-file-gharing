@@ -76,7 +76,7 @@ class Multicast(object):
             print("Error creating udp receive socket")
 
     def check_counter(self):
-        print("Check msg counter: ", time.ctime())
+        #print("Check msg counter: ", time.ctime())
         #self.group = {}
         if ((len(self.server_msg_count) > 0) and (self.current_runtime > 10)):
             for key in self.server_msg_count.keys():
@@ -96,7 +96,6 @@ class Multicast(object):
 
     def update_group(self):
         server_address = ""
-        print('\nwaiting to receive message')
         try:
             data, address = self.multicast_receive_socket.recvfrom(1024)
             now = time.time()
@@ -116,7 +115,7 @@ class Multicast(object):
                     received_vector_clock = data.decode().split("vc=",1)[1]
                     received_vector_clock = [int(s) for s in re.findall(r'\b\d+\b', received_vector_clock)]
 
-                    print('received message from Process {}. Vector Clock is {}'.format(server_id, received_vector_clock))
+                    #print('received message from Process {}. Vector Clock is {}'.format(server_id, received_vector_clock))
                     for id in range(len(self.vector_clock)):
                         self.vector_clock[id-1] = max(received_vector_clock[id-1], self.vector_clock[id-1])
 
@@ -184,14 +183,12 @@ class Multicast(object):
             self.allowed_to_send = True
         else:
             now = time.time()
-            if (int(now % 60) > (int(self.start_time % 60) + 10)):
+            if ((int(now % 60) > (int(self.start_time % 60) + 20)) and self.desired_group_length > 1):
                 self.allowed_to_send = False
 
         if (self.allowed_to_send == True):
             #Increase vector clock
             self.vector_clock[int(self.server_id)-1] += 1
-            print('Process {} performed send event. Vector Clock is {}'.format(self.server_id, self.vector_clock))
-
             if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
                 self.multicast_message =  b'LEADER Server ID ' + bytes(self.server_id, 'utf-8') + b' vc=' + bytes(str(self.vector_clock), 'utf-8')
             else:
