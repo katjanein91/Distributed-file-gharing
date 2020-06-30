@@ -113,7 +113,7 @@ def process_file(client_socket, client_id, server_address, server_port, operatio
                 send_message(client_id, server_address, server_port, operations_done)
 
             #Write content to file
-            else:
+            if "checksum" not in data.decode():
                 f = open(FILENAME, "w")
                 f.write(data.decode())
                 f.close()
