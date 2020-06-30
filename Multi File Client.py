@@ -54,12 +54,9 @@ def create_udp_receive_socket():
     except socket.error:
         print("Error creating udp socket")
 
-def send_message(client_id, server_address, server_port):
+def send_message(client_id, server_address, server_port, operations_done):
     client_id += 1
     print('This is client ' + str(client_id) + ' with process id ' + str(os.getpid()))
-    checksum_checked = False
-    file_written = False
-    operations_done = False
 
     client_socket = create_tcp_socket()
     try:
@@ -75,45 +72,11 @@ def send_message(client_id, server_address, server_port):
         message = 'file'
         #Send data
         client_socket.sendall(message.encode())
-        print('Sent to server: ', message)
+        print('Sent file request to server: ', server_address)
+        process_file(client_socket, client_id, server_address, server_port, operations_done)
     
     except socket.error:
         print("Error sending file request")
-
-    try: 
-        while operations_done == False:
-            # Receive response
-            print('Waiting for response...')
-
-            try:
-                data = client_socket.recv(BUFFER_SIZE)
-                print('Received message from server: ', data.decode())   
-
-                #Check received checksum             
-                if "checksum" in data.decode():
-                    checksum_checked = True
-                    received_checksum = data.decode().split("=")[1]
-                    checksum = CS.generate_digest()
-                    if received_checksum == checksum:
-                        print("file transmitted without errors")
-                    else:
-                        print("file corrupted while transmitting!!")
-
-                #Write content to file
-                else:
-                    f = open(FILENAME, "w")
-                    f.write(data.decode())
-                    f.close()
-                    file_written = True
-
-                if file_written and checksum_checked:
-                    print("All operations done")
-                    operations_done = True
-                        
-            except socket.timeout:
-                print("Timeout for receiving data")
-            except socket.error:
-                print("Error receiving data")
 
     except KeyboardInterrupt:
         print("caught keyboard interrupt, exiting")
@@ -121,17 +84,60 @@ def send_message(client_id, server_address, server_port):
         client_socket.close()
         sys.exit(1)
 
-    #Operations are finished, Socket can be closed
-    finally:
-        print("Operations finished, closing socket")
-        client_socket.close()
-        sys.exit(1)
+def process_file(client_socket, client_id, server_address, server_port, operations_done):
+    checksum_checked = False
+    file_corrupted = False
+    file_written = False
 
-        
+    while operations_done == False:
+        # Receive response
+        print('Waiting for response...')
+
+        try:
+            data = client_socket.recv(BUFFER_SIZE)
+            print('Received message from server: ', data.decode())   
+
+            #Check received checksum             
+            if "checksum" in data.decode():
+                checksum_checked = True
+                received_checksum = data.decode().split("=")[1]
+                checksum = CS.generate_digest()
+                if received_checksum == checksum:
+                    print("file transmitted without errors")
+                    file_corrupted = False
+                else:
+                    print("file corrupted while transmitting!")
+                    file_corrupted = True
+
+            if file_corrupted == True:
+                send_message(client_id, server_address, server_port, operations_done)
+
+            #Write content to file
+            else:
+                f = open(FILENAME, "w")
+                f.write(data.decode())
+                f.close()
+                file_written = True
+
+            if file_written and checksum_checked:
+                operations_done = True
+
+        except socket.timeout:
+            print("Timeout for receiving data")
+        except socket.error:
+            print("Error receiving data")
+            
+        if operations_done == True and client_id == 3:
+            print("All operations done, closing socket")
+            client_socket.close()
+            sys.exit(1)
+                    
+
 if __name__ == "__main__":
     server_address = ""
     server_port = 3000
     p = None
+    operations_done = False
 
     multicast_socket = create_udp_receive_socket()
 
@@ -154,7 +160,7 @@ if __name__ == "__main__":
         #Start 1 process of each client
         for i in range(NUMBER_CLIENTS):
             client_id = i 
-            p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port))
+            p = multiprocessing.Process(target=send_message, args=(client_id, server_address, server_port, operations_done))
             p.start()
             p.join
     except KeyboardInterrupt:

@@ -151,7 +151,7 @@ class Multicast(object):
                 self.leader_id = lcr.leader
                 self.leader_selected = True
 
-            elif (len(self.group) < self.desired_group_length) and (self.current_runtime > 10) and self.leader_selected == False:
+            elif ((len(self.group) < self.desired_group_length) and (self.current_runtime > 10) and (self.leader_selected == False)):
                 if (len(self.group) < 2):
                     self.desired_group_length = 1
                 elif (len(self.group) < 3):
