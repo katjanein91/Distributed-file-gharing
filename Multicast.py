@@ -5,6 +5,7 @@ import signal
 import json
 import re
 import threading, time
+import numpy as np
 from LCR import LCR
 from datetime import datetime
 
@@ -181,7 +182,7 @@ class Multicast(object):
     def send_message(self):
         print("Group view: ", self.group)
 
-        if (len(self.group) > 1 and (min(self.vector_clock) != 0) and (self.vector_clock.index(min(self.vector_clock)) + 1) == int(self.server_id)):
+        if (len(self.group) > 1 and ((self.vector_clock.index(np.min(self.vector_clock[np.nonzero(self.vector_clock)])) + 1) == int(self.server_id))):
             print("Allowed to send")
             self.allowed_to_send = True
         else:
