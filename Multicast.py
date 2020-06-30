@@ -11,7 +11,7 @@ from datetime import datetime
 #IP Multicast group
 MULTICAST_GROUP="224.0.0.0"
 MULTICAST_SERVER_ADDR = ("", 10000)
-MSG_SEND_INTERVAL = 5.0
+MSG_SEND_INTERVAL = 3.0
 GROUP_UPDATE_INTERVAL = 2.0
 COUNTER_CHECK_INTERVAL = 10.0    
 
@@ -107,7 +107,7 @@ class Multicast(object):
                 id_str=data.decode().split("Server ID",1)[1] 
                 server_id=[int(s) for s in re.findall(r'\b\d+\b', id_str)][0]
 
-                if (len(self.group) >= self.desired_group_length and server_id in self.server_msg_count):
+                if (server_id in self.server_msg_count):
                     self.server_msg_count[server_id] = self.server_msg_count[server_id] + 1
                 else:
                     self.server_msg_count[server_id] = 1
