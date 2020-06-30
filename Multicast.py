@@ -182,7 +182,9 @@ class Multicast(object):
     def send_message(self):
         print("Group view: ", self.group)
 
-        if (len(self.group) > 1 and ((self.vector_clock.index(np.min(self.vector_clock[np.nonzero(self.vector_clock)])) + 1) == int(self.server_id))):
+        masked_vc = np.ma.masked_equal(self.vector_clock, 0, copy=False)
+        min_vc = masked_vc.min()
+        if (len(self.group) > 1 and ((self.vector_clock.index(min_vc) + 1) == int(self.server_id))):
             print("Allowed to send")
             self.allowed_to_send = True
         else:
