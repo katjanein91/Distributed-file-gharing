@@ -126,6 +126,7 @@ class Multicast(object):
 
             if "LEADER" in data.decode():
                 self.leader_ip = server_address
+                self.leader_selected = True
                 
             print('received "%s" from server %s' % (data, address))  
             #print('sending acknowledgement to', address)
