@@ -76,9 +76,9 @@ class Multicast(object):
             print("Error creating udp receive socket")
 
     def check_counter(self):
-        #print("Check msg counter: ", time.ctime())
         #self.group = {}
-        if ((len(self.server_msg_count) > 0) and (self.current_runtime > 10)):
+        if (len(self.server_msg_count) > 0):
+            #print("Check msg counter")
             for key in self.server_msg_count.keys():
                 counter = self.server_msg_count.get(key)
                 #Reset the counter after the check time interval
@@ -100,6 +100,7 @@ class Multicast(object):
             data, address = self.multicast_receive_socket.recvfrom(1024)
             now = time.time()
             self.current_runtime = int(now % 60) - int(self.start_time % 60)
+            #print("current runtime: ", self.current_runtime)
             server_address = address[0]
 
             if "Server ID" in data.decode():
@@ -163,7 +164,7 @@ class Multicast(object):
                 self.leader_selected = False
                 if (len(self.group) < 2):
                     self.desired_group_length = 1
-                elif (len(self.group) < 1):
+                elif (len(self.group) < 3):
                     self.desired_group_length = 2
                 else:
                     self.desired_group_length = 3
