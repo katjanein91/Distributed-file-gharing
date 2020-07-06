@@ -154,7 +154,7 @@ class Multicast(object):
                 self.leader_id = lcr.leader
                 self.leader_selected = True
 
-            elif ((len(self.group) < self.desired_group_length) and (self.current_runtime > 10) and (self.leader_selected == False)):
+            elif ((len(self.group) < self.desired_group_length) and (self.current_runtime > 20) and (self.leader_selected == False)):
                 if (len(self.group) < 2):
                     self.desired_group_length = 1
                 elif (len(self.group) < 3):
@@ -163,7 +163,7 @@ class Multicast(object):
                     self.desired_group_length = 3
 
             #If a node goes down and a leader is selected, start a new election
-            if (len(self.group) < self.desired_group_length) and self.leader_selected == True:
+            if (len(self.group) < self.desired_group_length) and (self.current_runtime > 20) and self.leader_selected == True:
                 self.leader_selected = False
                 if (len(self.group) < 2):
                     self.desired_group_length = 1
@@ -184,15 +184,18 @@ class Multicast(object):
 
         masked_vc = np.ma.masked_equal(self.vector_clock, 0, copy=False)
         min_vc = masked_vc.min()
+        print("desired group length=", self.desired_group_length)
         if (len(self.group) > 1 and ((self.vector_clock.index(min_vc) + 1) == int(self.server_id))):
-            print("Allowed to send")
             self.allowed_to_send = True
         else:
             now = time.time()
             if ((int(now % 60) > (int(self.start_time % 60) + 20)) and self.desired_group_length > 1):
                 self.allowed_to_send = False
+            else:
+                self.allowed_to_send = True
 
         if (self.allowed_to_send == True):
+            print("Allowed to send")
             #Increase vector clock
             self.vector_clock[int(self.server_id)-1] += 1
             if (self.leader_id == int(self.server_id) or self.desired_group_length == 1):
